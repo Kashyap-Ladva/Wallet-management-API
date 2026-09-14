@@ -4,7 +4,15 @@ from pathlib import Path
 FILE_PATH = Path(__file__).resolve().parent.parent / "data" / "wallets.json"
 
 
+def ensure_file():
+    if not FILE_PATH.exists():
+        FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with FILE_PATH.open("w", encoding="utf-8") as file:
+            json.dump([], file)
+
+
 def read_wallets():
+    ensure_file()
     with FILE_PATH.open("r", encoding="utf-8") as file:
         return json.load(file)
 
