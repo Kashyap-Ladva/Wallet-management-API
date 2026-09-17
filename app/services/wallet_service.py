@@ -1,74 +1,42 @@
-import json
-from pathlib import Path
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-FILE_PATH = Path(__file__).resolve().parent.parent / "data" / "wallets.json"
-
-
-def ensure_file():
-    if not FILE_PATH.exists():
-        FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with FILE_PATH.open("w", encoding="utf-8") as file:
-            json.dump([], file)
+from app.models import Wallet
 
 
-def read_wallets():
-    ensure_file()
-    with FILE_PATH.open("r", encoding="utf-8") as file:
-        return json.load(file)
-
-
-def save_wallets(wallets):
-    with FILE_PATH.open("w", encoding="utf-8") as file:
-        json.dump(wallets, file, indent=4)
-
-
-def create_wallet(name: str, currency: str):
-    wallets = read_wallets()
-    wallet = {
-        "id": max((item["id"] for item in wallets), default=0) + 1,
-        "name": name,
-        "currency": currency,
-        "balance": 0,
-    }
-    wallets.append(wallet)
-    save_wallets(wallets)
+def create_wallet(db: Session, name: str, currency: str) -> Wallet:
+    wallet = Wallet(name=name, currency=currency, balance=0)
+    db.add(wallet)
+    db.commit()
+    db.refresh(wallet)
     return wallet
 
 
-def get_wallets():
-    return read_wallets()
+def get_wallets(db: Session) -> list[Wallet]:
+    return list(db.scalars(select(Wallet).order_by(Wallet.id)))
 
 
-def get_wallet(wallet_id: int):
-    return next(
-        (wallet for wallet in read_wallets() if wallet["id"] == wallet_id),
-        None,
-    )
+def get_wallet(db: Session, wallet_id: int) -> Wallet | None:
+    return db.get(Wallet, wallet_id)
 
 
-def update_wallet(wallet_id: int, updates: dict):
-    wallets = read_wallets()
-    wallet = next(
-        (wallet for wallet in wallets if wallet["id"] == wallet_id),
-        None,
-    )
+def update_wallet(db: Session, wallet_id: int, updates: dict) -> Wallet | None:
+    wallet = get_wallet(db, wallet_id)
     if wallet is None:
         return None
 
-    wallet.update(updates)
-    save_wallets(wallets)
+    for field, value in updates.items():
+        setattr(wallet, field, value)
+    db.commit()
+    db.refresh(wallet)
     return wallet
 
 
-def delete_wallet(wallet_id: int):
-    wallets = read_wallets()
-    wallet = next(
-        (wallet for wallet in wallets if wallet["id"] == wallet_id),
-        None,
-    )
+def delete_wallet(db: Session, wallet_id: int) -> bool:
+    wallet = get_wallet(db, wallet_id)
     if wallet is None:
         return False
 
-    wallets.remove(wallet)
-    save_wallets(wallets)
+    db.delete(wallet)
+    db.commit()
     return True

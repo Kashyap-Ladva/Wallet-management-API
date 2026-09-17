@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 
+from app.database import init_db
 from app.routers.transactions import router as transaction_router
 from app.routers.wallets import router as wallet_router
 
 app = FastAPI()
+init_db()
 
 
 @app.get("/")
