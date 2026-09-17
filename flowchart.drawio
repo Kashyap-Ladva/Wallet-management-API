@@ -1,32 +1,32 @@
 <mxfile host="65bd71144e">
     <diagram id="flowchart" name="System Flowchart">
-        <mxGraphModel dx="494" dy="243" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+        <mxGraphModel dx="3407" dy="925" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
                 <mxCell id="title-flow" value="Wallet Management API - Request Flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#17324D;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="30" width="600" height="40" as="geometry"/>
+                    <mxGeometry y="40" width="600" height="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="client" value="Client&#xa;Browser / API consumer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1F8;strokeColor=#3D6B89;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="180" width="180" height="70" as="geometry"/>
+                    <mxGeometry x="-20" y="180" width="180" height="70" as="geometry"/>
                 </mxCell>
                 <mxCell id="fastapi" value="FastAPI application&#xa;app/main.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DDEFE7;strokeColor=#3D8261;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="330" y="180" width="210" height="70" as="geometry"/>
+                    <mxGeometry x="290" y="180" width="210" height="70" as="geometry"/>
                 </mxCell>
                 <mxCell id="schema" value="Pydantic schemas&#xa;app/schema/*" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1D6;strokeColor=#B9822D;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="640" y="180" width="210" height="70" as="geometry"/>
+                    <mxGeometry x="650" y="180" width="210" height="70" as="geometry"/>
                 </mxCell>
                 <mxCell id="router" value="Routers&#xa;wallets.py / transactions.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4E3EC;strokeColor=#9A4E71;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="950" y="180" width="240" height="70" as="geometry"/>
+                    <mxGeometry x="990" y="180" width="240" height="70" as="geometry"/>
                 </mxCell>
                 <mxCell id="service" value="Services&#xa;wallet_service.py&#xa;transaction_service.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8E1F4;strokeColor=#765A9A;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="1290" y="180" width="240" height="90" as="geometry"/>
+                    <mxGeometry x="1420" y="165" width="240" height="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="orm" value="SQLAlchemy ORM&#xa;models.py + database.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2ECEF;strokeColor=#52727D;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="1290" y="390" width="240" height="80" as="geometry"/>
+                    <mxGeometry x="1420" y="400" width="240" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="db" value="SQLite&#xa;wallets.db" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#F7E5D4;strokeColor=#A66A35;fontSize=15;fontStyle=1;" parent="1" vertex="1">
-                    <mxGeometry x="1290" y="580" width="240" height="90" as="geometry"/>
+                    <mxGeometry x="1420" y="580" width="240" height="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="response" value="HTTP response&#xa;JSON / status code" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1F8;strokeColor=#3D6B89;fontSize=15;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="950" y="580" width="240" height="70" as="geometry"/>
@@ -38,7 +38,9 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="edge3" value="validated request" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;" parent="1" source="schema" target="router" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="edge4" value="business operation" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;" parent="1" source="router" target="service" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
@@ -49,178 +51,29 @@
                 <mxCell id="edge6" value="read / write" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;" parent="1" source="orm" target="db" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="edge7" value="result" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;dashed=1;" parent="1" source="service" target="response" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="edge7" value="result" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;dashed=1;exitX=0.343;exitY=1.003;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="service" target="response" edge="1">
+                    <mxGeometry x="0.3739" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1502" y="290"/>
+                            <mxPoint x="1070" y="290"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
                 </mxCell>
-                <mxCell id="edge8" value="return" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;dashed=1;" parent="1" source="response" target="client" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="edge8" value="return" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;dashed=1;" parent="1" source="note" target="client" edge="1">
+                    <mxGeometry x="-0.3133" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;dashed=1;" edge="1" parent="1" source="response" target="note">
+                    <mxGeometry x="-0.3133" relative="1" as="geometry">
+                        <mxPoint x="950" y="615" as="sourcePoint"/>
+                        <mxPoint x="70" y="250" as="targetPoint"/>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="note" value="Startup: main.py calls init_db(), creates tables, and imports JSON seed data only when wallets.db does not exist." style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#FFF8C5;strokeColor=#C8B458;fontSize=13;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="390" width="420" height="100" as="geometry"/>
-                </mxCell>
-            </root>
-        </mxGraphModel>
-    </diagram>
-    <diagram id="component-uml" name="Component UML">
-        <mxGraphModel dx="2140" dy="960" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
-            <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="ctitle" value="Wallet Management API - Component UML" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#17324D;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="30" width="600" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="api" value="&lt;&lt;application&gt;&gt;&lt;br&gt;&lt;b&gt;app.main&lt;/b&gt;&lt;hr&gt;+ FastAPI app&lt;br&gt;+ init_db() at startup&lt;br&gt;+ / and /health" style="shape=component;whiteSpace=wrap;html=1;fillColor=#DDEFE7;strokeColor=#3D8261;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="620" y="110" width="260" height="130" as="geometry"/>
-                </mxCell>
-                <mxCell id="wallet-router" value="&lt;&lt;router&gt;&gt;&lt;br&gt;&lt;b&gt;wallets.py&lt;/b&gt;&lt;hr&gt;Wallet CRUD endpoints&lt;br&gt;/wallets" style="shape=component;whiteSpace=wrap;html=1;fillColor=#F4E3EC;strokeColor=#9A4E71;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="180" y="320" width="260" height="130" as="geometry"/>
-                </mxCell>
-                <mxCell id="tx-router" value="&lt;&lt;router&gt;&gt;&lt;br&gt;&lt;b&gt;transactions.py&lt;/b&gt;&lt;hr&gt;Transaction and report endpoints&lt;br&gt;/wallets/{id}/transactions&lt;br&gt;/transactions/{id}" style="shape=component;whiteSpace=wrap;html=1;fillColor=#F4E3EC;strokeColor=#9A4E71;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="1040" y="320" width="300" height="150" as="geometry"/>
-                </mxCell>
-                <mxCell id="wallet-service" value="&lt;&lt;service&gt;&gt;&lt;br&gt;&lt;b&gt;wallet_service.py&lt;/b&gt;&lt;hr&gt;+ create_wallet&lt;br&gt;+ get_wallet(s)&lt;br&gt;+ update_wallet&lt;br&gt;+ delete_wallet" style="shape=component;whiteSpace=wrap;html=1;fillColor=#E8E1F4;strokeColor=#765A9A;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="180" y="590" width="260" height="150" as="geometry"/>
-                </mxCell>
-                <mxCell id="tx-service" value="&lt;&lt;service&gt;&gt;&lt;br&gt;&lt;b&gt;transaction_service.py&lt;/b&gt;&lt;hr&gt;+ create_transaction&lt;br&gt;+ get_wallet_transactions&lt;br&gt;+ get/update/delete_transaction" style="shape=component;whiteSpace=wrap;html=1;fillColor=#E8E1F4;strokeColor=#765A9A;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="1040" y="590" width="300" height="150" as="geometry"/>
-                </mxCell>
-                <mxCell id="schemas" value="&lt;&lt;validation&gt;&gt;&lt;br&gt;&lt;b&gt;app.schema&lt;/b&gt;&lt;hr&gt;WalletCreate / Update / Response&lt;br&gt;TransactionCreate / Update / Response" style="shape=component;whiteSpace=wrap;html=1;fillColor=#FFF1D6;strokeColor=#B9822D;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="620" y="320" width="260" height="130" as="geometry"/>
-                </mxCell>
-                <mxCell id="persistence" value="&lt;&lt;persistence&gt;&gt;&lt;br&gt;&lt;b&gt;database.py + models.py&lt;/b&gt;&lt;hr&gt;SessionLocal / get_db&lt;br&gt;SQLAlchemy engine and ORM mappings&lt;br&gt;SQLite wallets.db" style="shape=component;whiteSpace=wrap;html=1;fillColor=#E2ECEF;strokeColor=#52727D;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="620" y="590" width="260" height="150" as="geometry"/>
-                </mxCell>
-                <mxCell id="ca1" value="includes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" parent="1" source="api" target="wallet-router" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ca2" value="includes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" parent="1" source="api" target="tx-router" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ca3" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" parent="1" source="wallet-router" target="schemas" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ca4" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" parent="1" source="tx-router" target="schemas" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ca5" value="delegates to" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" parent="1" source="wallet-router" target="wallet-service" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ca6" value="delegates to" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" parent="1" source="tx-router" target="tx-service" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ca7" value="updates wallet balance" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;dashed=1;" parent="1" source="tx-router" target="wallet-service" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ca8" value="persists through" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" parent="1" source="wallet-service" target="persistence" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ca9" value="persists through" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" parent="1" source="tx-service" target="persistence" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-            </root>
-        </mxGraphModel>
-    </diagram>
-    <diagram id="domain-uml" name="Domain UML">
-        <mxGraphModel dx="2675" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
-            <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="dtitle" value="Wallet Management API - Domain UML" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#17324D;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="30" width="600" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="wallet-class" value="&lt;b&gt;Wallet&lt;/b&gt;&lt;hr&gt;- id: int&lt;br&gt;- name: str&lt;br&gt;- currency: str&lt;br&gt;- balance: float&lt;hr&gt;+ transactions: list[Transaction]" style="shape=umlClass;whiteSpace=wrap;html=1;fillColor=#DDEFE7;strokeColor=#3D8261;fontSize=15;align=left;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="260" y="260" width="300" height="240" as="geometry"/>
-                </mxCell>
-                <mxCell id="transaction-class" value="&lt;b&gt;Transaction&lt;/b&gt;&lt;hr&gt;- id: int&lt;br&gt;- wallet_id: int&lt;br&gt;- amount: float&lt;br&gt;- type: income | expense&lt;br&gt;- category: str&lt;br&gt;- description: str | None&lt;hr&gt;+ wallet: Wallet" style="shape=umlClass;whiteSpace=wrap;html=1;fillColor=#F4E3EC;strokeColor=#9A4E71;fontSize=15;align=left;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="900" y="260" width="340" height="270" as="geometry"/>
-                </mxCell>
-                <mxCell id="wallet-schema" value="&lt;b&gt;WalletCreate&lt;/b&gt;&lt;hr&gt;+ name: str&lt;br&gt;+ currency: str" style="shape=umlClass;whiteSpace=wrap;html=1;fillColor=#FFF1D6;strokeColor=#B9822D;fontSize=14;align=left;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="650" width="220" height="100" as="geometry"/>
-                </mxCell>
-                <mxCell id="tx-schema" value="&lt;b&gt;TransactionCreate&lt;/b&gt;&lt;hr&gt;+ amount: float &gt; 0&lt;br&gt;+ type: income | expense&lt;br&gt;+ category: str&lt;br&gt;+ description: str?" style="shape=umlClass;whiteSpace=wrap;html=1;fillColor=#FFF1D6;strokeColor=#B9822D;fontSize=14;align=left;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="1280" y="650" width="250" height="140" as="geometry"/>
-                </mxCell>
-                <mxCell id="rel" value="1 owns 0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=diamond;endFill=1;startArrow=none;strokeWidth=2;" parent="1" source="wallet-class" target="transaction-class" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="fk" value="wallet_id FK; on delete CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeWidth=2;" parent="1" source="transaction-class" target="wallet-class" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="wsrel" value="validates into" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;" parent="1" source="wallet-schema" target="wallet-class" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="tsrel" value="validates into" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;" parent="1" source="tx-schema" target="transaction-class" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="note-domain" value="Transaction writes adjust Wallet.balance. Expenses are rejected when the resulting balance would be negative." style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#FFF8C5;strokeColor=#C8B458;fontSize=14;" parent="1" vertex="1">
-                    <mxGeometry x="560" y="650" width="550" height="100" as="geometry"/>
-                </mxCell>
-            </root>
-        </mxGraphModel>
-    </diagram>
-    <diagram id="sequence" name="Transaction Sequence">
-        <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
-            <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="stitle" value="POST /wallets/{wallet_id}/transactions - Sequence" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#17324D;" vertex="1" parent="1">
-                    <mxGeometry x="40" y="30" width="800" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="actor" value="Client" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=14;" vertex="1" parent="1">
-                    <mxGeometry x="80" y="110" width="60" height="90" as="geometry"/>
-                </mxCell>
-                <mxCell id="seq-router" value="transactions.py" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#F4E3EC;strokeColor=#9A4E71;fontSize=14;" vertex="1" parent="1">
-                    <mxGeometry x="280" y="110" width="150" height="650" as="geometry"/>
-                </mxCell>
-                <mxCell id="seq-wallet" value="wallet_service.py" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#E8E1F4;strokeColor=#765A9A;fontSize=14;" vertex="1" parent="1">
-                    <mxGeometry x="570" y="110" width="170" height="650" as="geometry"/>
-                </mxCell>
-                <mxCell id="seq-tx" value="transaction_service.py" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#E8E1F4;strokeColor=#765A9A;fontSize=14;" vertex="1" parent="1">
-                    <mxGeometry x="880" y="110" width="190" height="650" as="geometry"/>
-                </mxCell>
-                <mxCell id="seq-db" value="SQLite / SQLAlchemy" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#E2ECEF;strokeColor=#52727D;fontSize=14;" vertex="1" parent="1">
-                    <mxGeometry x="1220" y="110" width="190" height="650" as="geometry"/>
-                </mxCell>
-                <mxCell id="s1" value="POST transaction payload" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="actor" target="seq-router">
-                    <mxGeometry relative="1">
-                        <mxPoint x="200" y="240" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="s2" value="get_wallet(wallet_id)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="seq-router" target="seq-wallet">
-                    <mxGeometry relative="1">
-                        <mxPoint x="500" y="310" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="s3" value="Wallet missing -&gt; 404" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeWidth=2;" edge="1" parent="1" source="seq-wallet" target="seq-router">
-                    <mxGeometry relative="1">
-                        <mxPoint x="500" y="370" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="decision" value="expense and amount &gt; balance?&#xa;yes -&gt; 400 Insufficient balance" style="shape=decision;whiteSpace=wrap;html=1;fillColor=#FFF8C5;strokeColor=#C8B458;fontSize=13;" vertex="1" parent="1">
-                    <mxGeometry x="330" y="400" width="300" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="s4" value="calculate new_balance" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="seq-router" target="decision">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="s5" value="update_wallet(balance)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="seq-router" target="seq-wallet">
-                    <mxGeometry relative="1">
-                        <mxPoint x="500" y="550" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="s6" value="create_transaction(...)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="seq-router" target="seq-tx">
-                    <mxGeometry relative="1">
-                        <mxPoint x="800" y="620" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="s7" value="INSERT + commit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeWidth=2;" edge="1" parent="1" source="seq-tx" target="seq-db">
-                    <mxGeometry relative="1">
-                        <mxPoint x="1140" y="680" as="targetPoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="s8" value="TransactionResponse / 201" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeWidth=2;" edge="1" parent="1" source="seq-router" target="actor">
-                    <mxGeometry relative="1">
-                        <mxPoint x="200" y="730" as="targetPoint"/>
-                    </mxGeometry>
+                    <mxGeometry x="-140" y="390" width="420" height="100" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
