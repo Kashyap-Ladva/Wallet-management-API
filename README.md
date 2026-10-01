@@ -1,6 +1,6 @@
 # Wallet Management API
 
-A beginner-friendly wallet management REST API built with FastAPI. The project uses SQLite with SQLAlchemy ORM for persistence and demonstrates API routing, Pydantic validation, CRUD operations, business logic, and error handling.
+A beginner-friendly wallet management REST API built with FastAPI. The project uses PostgreSQL with SQLAlchemy ORM for persistence and demonstrates API routing, Pydantic validation, CRUD operations, business logic, and error handling.
 
 ## Features
 
@@ -20,7 +20,7 @@ A beginner-friendly wallet management REST API built with FastAPI. The project u
 - FastAPI
 - Uvicorn
 - Pydantic
-- SQLite
+- PostgreSQL
 - SQLAlchemy ORM
 
 ## Project Structure
@@ -58,6 +58,21 @@ Install dependencies:
 ```powershell
 pip install -r requirements.txt
 ```
+
+Create a PostgreSQL database and application user (run in `psql` as a PostgreSQL administrator):
+
+```sql
+CREATE USER wallet_user WITH PASSWORD 'choose_a_password';
+CREATE DATABASE wallet_management OWNER wallet_user;
+```
+
+Copy `.env.example` to `.env` and set `DATABASE_URL` to your PostgreSQL connection URL. For a local server, use:
+
+```text
+DATABASE_URL=postgresql+psycopg://wallet_user:choose_a_password@localhost:5432/wallet_management
+```
+
+Keep `.env` private; it is excluded from version control. On startup, SQLAlchemy creates the `wallets` and `transactions` tables. Existing JSON seed files are imported only when the `wallets` table is not already present.
 
 ## Run the API
 
@@ -153,9 +168,9 @@ The API returns meaningful HTTP errors, including:
 
 ## Data Storage
 
-Data is stored locally in `wallets.db`, which is created automatically on first startup.
+Data is stored in the PostgreSQL database specified by `DATABASE_URL`.
 
-If `wallets.db` does not exist, the existing JSON files are imported once:
+If the `wallets` table does not exist, the existing JSON files are imported once:
 
 ```text
 app/data/wallets.json

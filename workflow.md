@@ -13,7 +13,7 @@ Service
       ↓
 SQLAlchemy ORM
       ↓
-SQLite Database
+PostgreSQL Database
   ↓
 Response
 ```
@@ -29,7 +29,7 @@ Create / View / Update / Delete Wallet
               ↓
                         SQLAlchemy ORM
                                           ↓
-                              SQLite
+                              PostgreSQL
 ```
 
 ## Transaction Flow
@@ -49,7 +49,7 @@ Update Balance
       ↓
 SQLAlchemy ORM
       ↓
-SQLite Database
+PostgreSQL Database
 ```
 
 ## Overall Project
@@ -67,7 +67,7 @@ SQLite Database
                          ↓
                 SQLAlchemy ORM
                          ↓
-                   SQLite Database
+                   PostgreSQL Database
 ```
 
 ## Main Components
@@ -76,7 +76,7 @@ SQLite Database
 - **Schema** → Validates input data.
 - **Service** → Contains the main logic.
 - **SQLAlchemy ORM** → Maps wallets and transactions to database tables.
-- **SQLite Database** → Stores wallet and transaction data in `wallets.db`.
+- **PostgreSQL Database** → Stores wallet and transaction data configured through `DATABASE_URL` in `.env`.
 
 ## Final Goal
 
@@ -85,5 +85,5 @@ Build a simple Wallet Management API that:
 1. Manages wallets.
 2. Handles income and expenses.
 3. Updates wallet balance.
-4. Stores data in SQLite through SQLAlchemy ORM.
+4. Stores data in PostgreSQL through SQLAlchemy ORM.
 5. Provides useful transaction information.

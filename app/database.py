@@ -1,25 +1,21 @@
 import json
+import os
 from pathlib import Path
 from typing import Generator
 
-from sqlalchemy import create_engine, event
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models import Base, Transaction, Wallet
 
 BASE_DIR = Path(__file__).resolve().parent
-DATABASE_PATH = BASE_DIR.parent / "wallets.db"
-DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+load_dotenv(BASE_DIR.parent / ".env")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is required; set it in the project root .env file.")
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
-
-
-@event.listens_for(engine, "connect")
-def enable_sqlite_foreign_keys(dbapi_connection, _connection_record):
-    dbapi_connection.execute("PRAGMA foreign_keys=ON")
+engine = create_engine(DATABASE_URL)
 
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
@@ -41,7 +37,7 @@ def _load_json(path: Path) -> list[dict]:
 
 
 def init_db() -> None:
-    database_exists = DATABASE_PATH.exists()
+    database_exists = inspect(engine).has_table("wallets")
     Base.metadata.create_all(bind=engine)
 
     if database_exists:

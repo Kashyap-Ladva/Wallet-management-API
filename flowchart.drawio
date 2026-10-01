@@ -25,7 +25,7 @@
                 <mxCell id="orm" value="SQLAlchemy ORM&#xa;models.py + database.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2ECEF;strokeColor=#52727D;fontSize=15;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="1420" y="400" width="240" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="db" value="SQLite&#xa;wallets.db" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#F7E5D4;strokeColor=#A66A35;fontSize=15;fontStyle=1;" parent="1" vertex="1">
+                <mxCell id="db" value="PostgreSQL&#xa;DATABASE_URL" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#F7E5D4;strokeColor=#A66A35;fontSize=15;fontStyle=1;" parent="1" vertex="1">
                     <mxGeometry x="1420" y="580" width="240" height="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="response" value="HTTP response&#xa;JSON / status code" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1F8;strokeColor=#3D6B89;fontSize=15;fontStyle=1;" parent="1" vertex="1">
@@ -72,7 +72,7 @@
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="note" value="Startup: main.py calls init_db(), creates tables, and imports JSON seed data only when wallets.db does not exist." style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#FFF8C5;strokeColor=#C8B458;fontSize=13;" parent="1" vertex="1">
+                <mxCell id="note" value="Startup: main.py calls init_db(), creates tables, and imports JSON seed data only when the wallets table does not exist." style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#FFF8C5;strokeColor=#C8B458;fontSize=13;" parent="1" vertex="1">
                     <mxGeometry x="-140" y="390" width="420" height="100" as="geometry"/>
                 </mxCell>
             </root>
