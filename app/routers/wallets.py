@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.schema.wallet import WalletCreate, WalletResponse, WalletUpdate
+from app.schema.super_wallet import WalletCreate, WalletResponse, WalletUpdate
 from app.services import wallet_service
 
 router = APIRouter(prefix="/wallets", tags=["wallets"])

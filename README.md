@@ -28,9 +28,6 @@ A beginner-friendly wallet management REST API built with FastAPI. The project u
 ```text
 app/
 ├── main.py
-├── data/
-│   ├── wallets.json
-│   └── transactions.json
 ├── database.py
 ├── models.py
 ├── routers/
