@@ -17,18 +17,21 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 class Base(DeclarativeBase):
     pass
 
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     phone: Mapped[str] = mapped_column(String, nullable=False)
-    email: Mapped[str] = mapped_column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     currency: Mapped[str] = mapped_column(String, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String, nullable=False)
     wallet: Mapped["SWallet | None"] = relationship(back_populates="user")
     date_created: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow
     )
+
 
 class SWallet(Base):
     __tablename__ = "wallets"
@@ -41,7 +44,7 @@ class SWallet(Base):
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     currency: Mapped[str] = mapped_column(String, nullable=False)
-    modeofpayment: Mapped[str] = mapped_column(String, nullable=False)
+    modeofpayment: Mapped[str] = mapped_column(String, nullable=False, default="wallet")
     user: Mapped[User] = relationship(back_populates="wallet")
     mini_wallets: Mapped[list["MWallet"]] = relationship(
         back_populates="super_wallet",
@@ -55,10 +58,12 @@ class SWallet(Base):
     date_created: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow
     )
+
     @property
     def total_balance(self) -> Decimal:
         return sum((wallet.balance for wallet in self.mini_wallets), Decimal("0.00"))
-    
+
+
 class MWallet(Base):
     __tablename__ = "mini_wallets"
 
@@ -70,7 +75,6 @@ class MWallet(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     modeofpayment: Mapped[str] = mapped_column(String, nullable=False)
     super_wallet: Mapped[SWallet] = relationship(back_populates="mini_wallets")
-    
     transactions: Mapped[list["Transaction"]] = relationship(
         back_populates="mini_wallet",
         foreign_keys="Transaction.mini_wallet_id",
@@ -91,7 +95,7 @@ class MWallet(Base):
             ),
             Decimal("0.00"),
         )
-    
+
 
 class Transaction(Base):
     __tablename__ = "transactions"

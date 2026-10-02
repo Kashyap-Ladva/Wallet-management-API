@@ -7,15 +7,11 @@ from pydantic import BaseModel, ConfigDict
 class SWalletCreate(BaseModel):
     name: str
     currency: str
-    modeofpayment: str
-    date_created: datetime | None = None
 
 
 class SWalletUpdate(BaseModel):
     name: str | None = None
     currency: str | None = None
-    modeofpayment: str | None = None
-    date_created: datetime | None = None
 
 
 class SWalletResponse(BaseModel):

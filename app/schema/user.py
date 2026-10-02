@@ -1,20 +1,21 @@
-from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
 
 class UserCreate(BaseModel):
     name: str
     phone: str
-    email: str
+    email: EmailStr
     currency: str
-    date_created: datetime | None = None
+    password: str = Field(..., min_length=8)
 
 
 class UserUpdate(BaseModel):
     name: str | None = None
     phone: str | None = None
-    email: str | None = None
+    email: EmailStr | None = None
     currency: str | None = None
-    date_created: datetime | None = None
 
 
 class UserResponse(BaseModel):

@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 
 from app.database import init_db
+from app.routers.auth import router as auth_router
+from app.routers.mini_wallets import router as mini_wallet_router
+from app.routers.super_wallet import router as super_wallet_router
 from app.routers.transactions import router as transaction_router
-from app.routers.wallets import router as wallet_router
+from app.routers.users import router as users_router
 
-app = FastAPI()
+app = FastAPI(title="Wallet Management API")
 init_db()
 
 
@@ -13,7 +16,10 @@ def home():
     return {"message": "Wallet Management API"}
 
 
-app.include_router(wallet_router)
+app.include_router(auth_router)
+app.include_router(users_router)
+app.include_router(super_wallet_router)
+app.include_router(mini_wallet_router)
 app.include_router(transaction_router)
 
 

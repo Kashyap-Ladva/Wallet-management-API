@@ -1,35 +1,54 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.dependencies import get_current_user
 from app.database import get_db
-from app.schema.super_wallet import WalletCreate, WalletResponse, WalletUpdate
+from app.models import User
+from app.schema.super_wallet import SWalletCreate, SWalletResponse, SWalletUpdate
 from app.services import wallet_service
 
-router = APIRouter(prefix="/wallets", tags=["wallets"])
+router = APIRouter(prefix="/wallets", tags=["legacy-wallets"])
 
 
-@router.post("", response_model=WalletResponse, status_code=status.HTTP_201_CREATED)
-def create_wallet(wallet: WalletCreate, db: Session = Depends(get_db)):
-    return wallet_service.create_wallet(db, wallet.name, wallet.currency)
+@router.post("", response_model=SWalletResponse, status_code=status.HTTP_201_CREATED)
+def create_wallet(
+    wallet: SWalletCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return wallet_service.create_super_wallet(db, current_user.id, wallet.name, wallet.currency)
 
 
-@router.get("", response_model=list[WalletResponse])
-def get_wallets(db: Session = Depends(get_db)):
-    return wallet_service.get_wallets(db)
+@router.get("", response_model=list[SWalletResponse])
+def get_wallets(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return wallet_service.get_wallets_for_user(db, current_user.id)
 
 
-@router.get("/{wallet_id}", response_model=WalletResponse)
-def get_wallet(wallet_id: int, db: Session = Depends(get_db)):
-    wallet = wallet_service.get_wallet(db, wallet_id)
+@router.get("/{wallet_id}", response_model=SWalletResponse)
+def get_wallet(
+    wallet_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    wallet = wallet_service.get_super_wallet_by_id(db, current_user.id, wallet_id)
     if wallet is None:
         raise HTTPException(status_code=404, detail="Wallet not found")
     return wallet
 
 
-@router.put("/{wallet_id}", response_model=WalletResponse)
-def update_wallet(wallet_id: int, wallet: WalletUpdate, db: Session = Depends(get_db)):
-    updated_wallet = wallet_service.update_wallet(
+@router.put("/{wallet_id}", response_model=SWalletResponse)
+def update_wallet(
+    wallet_id: int,
+    wallet: SWalletUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    updated_wallet = wallet_service.update_super_wallet(
         db,
+        current_user.id,
         wallet_id,
         wallet.model_dump(exclude_unset=True),
     )
@@ -39,6 +58,10 @@ def update_wallet(wallet_id: int, wallet: WalletUpdate, db: Session = Depends(ge
 
 
 @router.delete("/{wallet_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_wallet(wallet_id: int, db: Session = Depends(get_db)):
-    if not wallet_service.delete_wallet(db, wallet_id):
+def delete_wallet(
+    wallet_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not wallet_service.delete_super_wallet(db, current_user.id, wallet_id):
         raise HTTPException(status_code=404, detail="Wallet not found")
