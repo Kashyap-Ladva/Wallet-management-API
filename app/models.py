@@ -66,6 +66,11 @@ class SWallet(Base):
 
 class MWallet(Base):
     __tablename__ = "mini_wallets"
+    
+    
+    __table_args__ = (
+        UniqueConstraint("super_wallet_id", "id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     super_wallet_id: Mapped[int] = mapped_column(
