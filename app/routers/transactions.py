@@ -264,7 +264,7 @@ def get_mini_wallet_balance(
     current_user: User = Depends(get_current_user),
 ):
     mini_wallet = _ensure_owned_mini_wallet(db, current_user, mini_wallet_id)
-    return {"mini_wallet_id": mini_wallet_id, "balance": mini_wallet.balance}
+    return {"mini_wallet_id": mini_wallet_id, "balance": f"{mini_wallet.balance:.2f}"}
 
 
 @router.get("/super-wallet/balance")
@@ -275,5 +275,5 @@ def get_super_wallet_balance(
     wallet = current_user.wallet
     if wallet is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Super wallet not found")
-    return {"super_wallet_id": wallet.id, "balance": wallet.total_balance}
+    return {"super_wallet_id": wallet.id, "balance": f"{wallet.total_balance:.2f}"}
 

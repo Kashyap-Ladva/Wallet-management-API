@@ -7,6 +7,10 @@ from pydantic import BaseModel, ConfigDict, Field
 TransactionType = Literal["income", "expense"]
 
 
+def _format_decimal(value: Decimal) -> str:
+    return format(value, "f")
+
+
 class TransactionCreate(BaseModel):
     amount: Decimal = Field(gt=0)
     type: TransactionType
@@ -28,7 +32,10 @@ class TransactionUpdate(BaseModel):
 
 
 class TransactionResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={Decimal: _format_decimal},
+    )
 
     id: int
     mini_wallet_id: int

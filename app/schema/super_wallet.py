@@ -4,6 +4,10 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
 
+def _format_decimal(value: Decimal) -> str:
+    return format(value, "f")
+
+
 class SWalletCreate(BaseModel):
     name: str
     currency: str
@@ -15,7 +19,10 @@ class SWalletUpdate(BaseModel):
 
 
 class SWalletResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={Decimal: _format_decimal},
+    )
 
     id: int
     user_id: int

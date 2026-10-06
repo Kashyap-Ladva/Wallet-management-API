@@ -55,6 +55,10 @@ class SWallet(Base):
         foreign_keys="Transaction.super_wallet_id",
         cascade="all, delete-orphan",
     )
+    budgets: Mapped[list["Budget"]] = relationship(
+        back_populates="super_wallet",
+        cascade="all, delete-orphan",
+    )
     date_created: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow
     )
@@ -100,6 +104,24 @@ class MWallet(Base):
             ),
             Decimal("0.00"),
         )
+
+
+class Budget(Base):
+    __tablename__ = "budgets"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    super_wallet_id: Mapped[int] = mapped_column(
+        ForeignKey("wallets.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    period: Mapped[str] = mapped_column(String, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    category: Mapped[str | None] = mapped_column(String, nullable=True)
+    super_wallet: Mapped[SWallet] = relationship(back_populates="budgets")
+    date_created: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=datetime.utcnow
+    )
 
 
 class Transaction(Base):
