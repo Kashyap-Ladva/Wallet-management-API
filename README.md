@@ -69,7 +69,7 @@ Copy `.env.example` to `.env` and set `DATABASE_URL` to your PostgreSQL connecti
 DATABASE_URL=postgresql+psycopg://wallet_user:choose_a_password@localhost:5432/wallet_management
 ```
 
-Keep `.env` private; it is excluded from version control. On startup, SQLAlchemy creates the `wallets` and `transactions` tables. Existing JSON seed files are imported only when the `wallets` table is not already present.
+Keep `.env` private; it is excluded from version control. On startup, SQLAlchemy creates any missing tables defined by the application models. `create_all` does not migrate existing tables; use a database migration when changing an existing schema.
 
 ## Run the API
 
@@ -154,6 +154,33 @@ Supported transaction types are `income` and `expense`. Amounts must be greater 
 | `GET` | `/wallets/{wallet_id}/balance` | Get current balance |
 | `GET` | `/wallets/{wallet_id}/summary` | Get income, expense, and balance totals |
 | `GET` | `/wallets/{wallet_id}/expenses/category` | Get expense totals grouped by category |
+
+### Phase 4 — Imports and financial records
+
+All endpoints below require a bearer access token. Excel imports accept `.xlsx` files up to 10 MB and require `amount`, `type`, `category`, `date_created`, `modeofpayment`, and `description` columns. A `proof` column is optional and stores the existing transaction proof reference.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/imports/excel/preview` | Validate an uploaded workbook for the selected owned `mini_wallet_id`; returns a SHA-256 preview token and row errors |
+| `POST` | `/imports/excel/confirm` | Re-upload the same workbook with `mini_wallet_id` and `preview_sha256` to atomically import it |
+| `POST` | `/imports/excel` | Validate the complete workbook and import it atomically without a separate preview |
+| `POST` / `GET` | `/transactions/{transaction_id}/proof` | Add or retrieve an owned transaction's text or image proof |
+| `POST` / `GET` | `/savings` | Create and list savings goals |
+| `PUT` / `DELETE` | `/savings/{goal_id}` | Update or delete an owned savings goal |
+| `POST` | `/savings/{goal_id}/contributions` | Add to or withdraw from a goal |
+| `POST` / `GET` | `/investments` | Create and list investment records |
+| `GET` / `PUT` / `DELETE` | `/investments/{investment_id}` | Retrieve, update, or delete an owned investment |
+| `POST` / `GET` | `/debts` | Create and list lent or borrowed records |
+| `PUT` / `DELETE` | `/debts/{debt_id}` | Update or delete an owned debt record |
+| `POST` | `/debts/{debt_id}/repayments` | Record a repayment and update remaining amount/status |
+| `POST` / `GET` | `/recurring-payments` | Create and list monthly recurring payments |
+| `PUT` / `DELETE` | `/recurring-payments/{payment_id}` | Update or delete an owned recurring payment |
+| `GET` | `/notifications` | List stored daily summaries and recurring-payment reminders |
+| `POST` | `/notifications/{notification_id}/read` | Mark an owned notification as read |
+
+Duplicate import rows are intentionally allowed and inserted as separate transactions; the importer does not attempt to infer whether identical rows are accidental duplicates. The daily summary runs at 23:59 UTC, and monthly reminders run at 00:05 UTC on the first day of each month. Jobs store notifications for retrieval through `/notifications`; no email or SMS delivery provider is configured. The in-process scheduler is intended for a single application instance; use a durable scheduler/queue or a single designated scheduler process when deploying multiple API instances.
+
+Proof text is stored in the transaction's `proof` field. Images must be JPEG, PNG, GIF, or WebP and are limited to 5 MB; they are stored under `app/data/proofs` by default, or under `<FILE_STORAGE_PATH>/proofs` when `FILE_STORAGE_PATH` is configured. Only a generated storage key is stored in the transaction.
 
 ## Error Handling
 

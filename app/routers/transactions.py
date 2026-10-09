@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
@@ -11,7 +12,7 @@ from app.schema.transaction import (
     TransactionResponse,
     TransactionUpdate,
 )
-from app.services import transaction_service
+from app.services import proof_service, transaction_service
 
 router = APIRouter(tags=["transactions"])
 
@@ -232,6 +233,7 @@ def delete_transaction(
         current_user,
         transaction_id,
     )
+    proof_reference = transaction.proof
 
     try:
         deleted = transaction_service.delete_transaction(
@@ -247,6 +249,7 @@ def delete_transaction(
             )
 
         db.commit()
+        proof_service.delete_image(proof_reference)
 
     except HTTPException:
         db.rollback()
@@ -255,6 +258,85 @@ def delete_transaction(
     except Exception:
         db.rollback()
         raise
+
+
+@router.post("/transactions/{transaction_id}/proof")
+async def upload_transaction_proof(
+    transaction_id: int,
+    text: str | None = Form(default=None, max_length=4000),
+    file: UploadFile | None = File(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    transaction = _ensure_owned_transaction(db, current_user, transaction_id)
+    if (text is None) == (file is None):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Provide exactly one of text or file",
+        )
+
+    old_reference = transaction.proof
+    new_reference: str
+    if file is not None:
+        content = await file.read(proof_service.IMAGE_MAX_BYTES + 1)
+        try:
+            new_reference = proof_service.store_image(file.content_type, content)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(exc),
+            ) from exc
+    else:
+        new_reference = (text or "").strip()
+        if not new_reference:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Text proof cannot be empty",
+            )
+
+    transaction.proof = new_reference
+    try:
+        db.commit()
+        db.refresh(transaction)
+    except Exception:
+        db.rollback()
+        if file is not None:
+            proof_service.delete_image(new_reference)
+        raise
+
+    if old_reference != new_reference:
+        proof_service.delete_image(old_reference)
+    return {
+        "transaction_id": transaction.id,
+        "proof": new_reference,
+        "kind": "image" if new_reference.startswith("file:proofs/") else "text",
+    }
+
+
+@router.get("/transactions/{transaction_id}/proof")
+def get_transaction_proof(
+    transaction_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    transaction = _ensure_owned_transaction(db, current_user, transaction_id)
+    if not transaction.proof:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proof not found")
+    try:
+        stored_image = proof_service.resolve_image(transaction.proof)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Stored proof image not found",
+        ) from exc
+    if stored_image is None:
+        return {
+            "transaction_id": transaction.id,
+            "proof": transaction.proof,
+            "kind": "text",
+        }
+    path, content_type = stored_image
+    return FileResponse(path, media_type=content_type)
 
 
 @router.get("/mini-wallets/{mini_wallet_id}/balance")
@@ -276,4 +358,3 @@ def get_super_wallet_balance(
     if wallet is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Super wallet not found")
     return {"super_wallet_id": wallet.id, "balance": f"{wallet.total_balance:.2f}"}
-

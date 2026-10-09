@@ -1,0 +1,91 @@
+<mxfile host="65bd71144e">
+    <diagram id="wallet-erd" name="Wallet Management ERD">
+        <mxGraphModel dx="4355" dy="2566" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1600" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#17365D;" value="WALLET MANAGEMENT API — DATABASE ER DIAGRAM&#xa;Based on SQLAlchemy models.py | PK = Primary Key | FK = Foreign Key | UQ = Unique | NN = Not Null" vertex="1">
+                    <mxGeometry height="100" width="1050" y="-580" as="geometry"/>
+                </mxCell>
+                <mxCell id="users" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;USERS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;name : String [NN]&lt;br&gt;phone : String [NN]&lt;br&gt;email : String [NN, UQ]&lt;br&gt;currency : String [NN]&lt;br&gt;password_hash : String [NN]&lt;br&gt;date_created : DateTime [NN]" vertex="1">
+                    <mxGeometry height="220" width="260" x="10" y="10" as="geometry"/>
+                </mxCell>
+                <mxCell id="wallets" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;WALLETS (Super Wallet)&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK user_id → users.id [NN, UQ]&lt;br&gt;name : String [NN]&lt;br&gt;currency : String [NN]&lt;br&gt;modeofpayment : String [NN]&lt;br&gt;date_created : DateTime [NN]&lt;br&gt;&lt;i&gt;total_balance: derived property&lt;/i&gt;" vertex="1">
+                    <mxGeometry height="220" width="300" x="-90" y="390" as="geometry"/>
+                </mxCell>
+                <mxCell id="mini_wallets" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;MINI_WALLETS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK super_wallet_id → wallets.id [NN]&lt;br&gt;name : String [NN]&lt;br&gt;modeofpayment : String [NN]&lt;br&gt;date_created : DateTime [NN]&lt;br&gt;UQ(super_wallet_id, id)&lt;br&gt;&lt;i&gt;balance: derived property&lt;/i&gt;" vertex="1">
+                    <mxGeometry height="210" width="310" x="620" y="550" as="geometry"/>
+                </mxCell>
+                <mxCell id="transactions" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;TRANSACTIONS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK mini_wallet_id → mini_wallets.id [NN]&lt;br&gt;FK super_wallet_id → wallets.id [NN]&lt;br&gt;FK (super_wallet_id, mini_wallet_id) → mini_wallets(super_wallet_id, id) [composite]&lt;br&gt;amount : Numeric(12,2) [NN, CHECK &gt; 0]&lt;br&gt;type : String [NN, CHECK income/expense]&lt;br&gt;category : String [NN]&lt;br&gt;description : String [nullable]&lt;br&gt;modeofpayment : String [NN]&lt;br&gt;proof : String [nullable]&lt;br&gt;date_created : DateTime [NN]" vertex="1">
+                    <mxGeometry height="330" width="410" x="40" y="730" as="geometry"/>
+                </mxCell>
+                <mxCell id="savings_goals" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;SAVINGS_GOALS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK user_id → users.id [NN]&lt;br&gt;name : String [NN]&lt;br&gt;target_amount : Numeric(12,2) [NN, CHECK &gt; 0]&lt;br&gt;current_amount : Numeric(12,2) [NN, default 0, CHECK ≥ 0]&lt;br&gt;target_date : Date [nullable]&lt;br&gt;status : String [NN, default active]&lt;br&gt;date_created : DateTime [NN]" vertex="1">
+                    <mxGeometry height="260" width="300" x="-440" y="155" as="geometry"/>
+                </mxCell>
+                <mxCell id="investments" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;INVESTMENTS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK user_id → users.id [NN]&lt;br&gt;name : String [NN]&lt;br&gt;amount : Numeric(12,2) [NN, CHECK &gt; 0]&lt;br&gt;investment_type : String [NN]&lt;br&gt;date : Date [NN]&lt;br&gt;notes : Text [nullable]&lt;br&gt;date_created : DateTime [NN]" vertex="1">
+                    <mxGeometry height="250" width="300" x="-440" y="-180" as="geometry"/>
+                </mxCell>
+                <mxCell id="debts" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;DEBTS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK user_id → users.id [NN]&lt;br&gt;person : String [NN]&lt;br&gt;direction : String [NN, CHECK lent/borrowed]&lt;br&gt;amount : Numeric(12,2) [NN, CHECK &gt; 0]&lt;br&gt;remaining_amount : Numeric(12,2) [NN, CHECK 0 ≤ remaining ≤ amount]&lt;br&gt;date : Date [NN]&lt;br&gt;due_date : Date [nullable]&lt;br&gt;status : String [NN, CHECK pending/partially_paid/settled]&lt;br&gt;notes : Text [nullable]&lt;br&gt;date_created : DateTime [NN]" vertex="1">
+                    <mxGeometry height="350" width="340" x="880" y="125" as="geometry"/>
+                </mxCell>
+                <mxCell id="debt_repayments" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;DEBT_REPAYMENTS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK debt_id → debts.id [NN]&lt;br&gt;amount : Numeric(12,2) [NN, CHECK &gt; 0]&lt;br&gt;date : Date [NN]&lt;br&gt;notes : Text [nullable]" vertex="1">
+                    <mxGeometry height="190" width="300" x="1010" y="560" as="geometry"/>
+                </mxCell>
+                <mxCell id="recurring_payments" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;RECURRING_PAYMENTS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK user_id → users.id [NN]&lt;br&gt;name : String [NN]&lt;br&gt;amount : Numeric(12,2) [NN, CHECK &gt; 0]&lt;br&gt;category : String [NN]&lt;br&gt;due_day : Integer [NN, CHECK 1–31]&lt;br&gt;frequency : String [NN, monthly only]&lt;br&gt;active : Boolean [NN, default true]&lt;br&gt;date_created : DateTime [NN]" vertex="1">
+                    <mxGeometry height="260" width="320" x="540" y="-210" as="geometry"/>
+                </mxCell>
+                <mxCell id="notifications" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;NOTIFICATIONS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK user_id → users.id [NN]&lt;br&gt;FK recurring_payment_id → recurring_payments.id [nullable]&lt;br&gt;kind : String [NN]&lt;br&gt;dedupe_key : String [NN]&lt;br&gt;UQ(user_id, dedupe_key)&lt;br&gt;message : Text [NN]&lt;br&gt;payload : JSON [NN]&lt;br&gt;read_at : DateTime [nullable]&lt;br&gt;date_created : DateTime [NN]" vertex="1">
+                    <mxGeometry height="270" width="360" x="-40" y="-370" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_user_wallet" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERone;startArrow=ERzeroToOne;endFill=0;startFill=0;strokeWidth=1.5;" target="wallets" value="1 : 0..1 (UQ user_id)">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_wallet_mini" edge="1" parent="1" source="wallets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="mini_wallets" value="1 : many">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_mini_transaction" edge="1" parent="1" source="mini_wallets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="transactions" value="1 : many">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_wallet_transaction" edge="1" parent="1" source="wallets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;dashed=1;" target="transactions" value="1 : many (also composite FK validates ownership)">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_wallet_budget" edge="1" parent="1" source="wallets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="budgets" value="1 : many">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_user_savings" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="savings_goals" value="1 : many">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_user_investments" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="investments" value="1 : many">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_user_debts" edge="1" parent="1" source="budgets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="debts" value="1 : many">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_debt_repayments" edge="1" parent="1" source="debts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="debt_repayments" value="1 : many">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_user_recurring" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="recurring_payments" value="1 : many">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_user_notifications" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="notifications" value="1 : many">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_recurring_notifications" edge="1" parent="1" source="recurring_payments" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERzeroToOne;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;dashed=1;" target="notifications" value="0..1 recurring payment per notification">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontSize=12;align=left;verticalAlign=top;spacing=10;" value="RELATIONSHIP NOTES&#xa;• Every FK shown as NN is NOT NULL in the model.&#xa;• User → Wallet is one-to-zero-or-one because wallets.user_id is unique.&#xa;• Wallet → Mini Wallet, Wallet → Budget, Wallet → Transaction, Mini Wallet → Transaction, User → Savings Goal / Investment / Debt / Recurring Payment / Notification, and Debt → Debt Repayment are one-to-many.&#xa;• Notification.recurring_payment_id is nullable, so a notification may have no recurring payment.&#xa;• Delete behavior follows the declared foreign keys/cascades; actual database cascade behavior also depends on database FK enforcement.&#xa;• Derived balances are Python properties, not stored columns." vertex="1">
+                    <mxGeometry height="250" width="720" x="680" y="820" as="geometry"/>
+                </mxCell>
+                <mxCell id="hbtjNB1vWTbWQ79ofo-v-2" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=ERmany;startArrow=ERone;endFill=0;startFill=0;strokeWidth=1.5;" target="budgets" value="">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="270" y="120" as="sourcePoint"/>
+                        <mxPoint x="600" y="790" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="budgets" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;align=left;verticalAlign=top;spacing=8;" value="&lt;b&gt;BUDGETS&lt;/b&gt;&lt;hr&gt;PK id : Integer&lt;br&gt;FK super_wallet_id → wallets.id [NN]&lt;br&gt;name : String [NN]&lt;br&gt;period : String [NN]&lt;br&gt;amount : Numeric(12,2) [NN]&lt;br&gt;category : String [nullable]&lt;br&gt;date_created : DateTime [NN]" vertex="1">
+                    <mxGeometry height="220" width="300" x="430" y="190" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

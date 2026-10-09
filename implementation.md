@@ -1586,17 +1586,17 @@ Notification/storage
 ## Phase 4
 
 ```text
-[ ] Excel preview
-[ ] Excel validation
-[ ] Excel import
-[ ] Duplicate strategy
-[ ] Savings
-[ ] Investments
-[ ] Debt/credit
-[ ] Recurring payments
-[ ] Daily summary
-[ ] Monthly reminders
-[ ] Phase 4 tests
+[x] Excel preview
+[x] Excel validation
+[x] Excel import
+[x] Duplicate strategy
+[x] Savings
+[x] Investments
+[x] Debt/credit
+[x] Recurring payments
+[x] Daily summary
+[x] Monthly reminders
+[x] Phase 4 tests
 ```
 
 ## Phase 5
