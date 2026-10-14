@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -29,7 +29,7 @@ def create_transaction(
         description=payload.get("description"),
         modeofpayment=(payload.get("modeofpayment") or "").strip(),
         proof=payload.get("proof"),
-        date_created=payload.get("date_created") or datetime.utcnow(),
+        date_created=payload.get("date_created") or datetime.now(timezone.utc),
     )
     db.add(transaction)
     db.flush()

@@ -5,9 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-def _format_decimal(value: Decimal) -> str:
-    return format(value, "f")
-
+from app.schema.common import DecimalStr
 
 DebtDirection = Literal["lent", "borrowed"]
 
@@ -37,17 +35,14 @@ class DebtRepaymentCreate(BaseModel):
 
 
 class DebtResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={Decimal: _format_decimal},
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
     user_id: int
     person: str
     direction: DebtDirection
-    amount: Decimal
-    remaining_amount: Decimal
+    amount: DecimalStr
+    remaining_amount: DecimalStr
     date: Date
     due_date: Date | None
     status: Literal["pending", "partially_paid", "settled"]
@@ -56,13 +51,10 @@ class DebtResponse(BaseModel):
 
 
 class DebtRepaymentResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={Decimal: _format_decimal},
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
     debt_id: int
-    amount: Decimal
+    amount: DecimalStr
     date: Date
     notes: str | None

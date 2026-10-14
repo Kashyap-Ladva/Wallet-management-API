@@ -1,14 +1,12 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Literal
+from typing import Literal 
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schema.common import DecimalStr
+
 TransactionType = Literal["income", "expense"]
-
-
-def _format_decimal(value: Decimal) -> str:
-    return format(value, "f")
 
 
 class TransactionCreate(BaseModel):
@@ -32,15 +30,12 @@ class TransactionUpdate(BaseModel):
 
 
 class TransactionResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={Decimal: _format_decimal},
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
     mini_wallet_id: int
     super_wallet_id: int
-    amount: Decimal
+    amount: DecimalStr
     type: TransactionType
     category: str
     description: str | None = None

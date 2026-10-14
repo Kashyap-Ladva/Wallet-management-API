@@ -1144,39 +1144,47 @@ Do not jump to charts, reminders, or Excel import before the transaction engine 
 
 The project is complete when:
 
-- [ ] User registration works.
-- [ ] Passwords are securely hashed.
-- [ ] Login and token authentication work.
-- [ ] Protected endpoints identify the current user.
-- [ ] Cross-user resource access is blocked.
-- [ ] One super wallet per user is enforced.
-- [ ] Multiple mini wallets work.
-- [ ] Income transactions work.
-- [ ] Expense transactions work.
-- [ ] Transaction update/delete correctly reverses old financial effects.
-- [ ] Mini-wallet balances are correct.
-- [ ] Super-wallet balance is correct.
-- [ ] Transaction dates persist correctly.
-- [ ] Transaction history supports filtering/pagination.
-- [ ] Payment proof can be stored/retrieved safely.
-- [ ] Daily/monthly/yearly analytics work.
-- [ ] Mini-wallet comparison works.
-- [ ] Category comparison works.
-- [ ] Pie/bar chart data APIs work.
-- [ ] Daily/monthly spending targets work.
-- [ ] Target crossing is detected.
-- [ ] Excel import validates and imports data safely.
-- [ ] Savings tracking works.
-- [ ] Investment tracking works.
-- [ ] Debt/credit tracking works.
-- [ ] Recurring payments can be stored.
-- [ ] Daily summaries are generated.
-- [ ] Monthly reminders are generated.
-- [ ] Automated tests cover critical financial flows.
-- [ ] Database operations are atomic.
-- [ ] Pagination and appropriate indexes are implemented.
-- [ ] Logging and health checks work.
-- [ ] Secrets are not hardcoded.
-- [ ] Docker/deployment configuration is ready.
+- [x] User registration works.
+- [x] Passwords are securely hashed.
+- [x] Login and token authentication work.
+- [x] Protected endpoints identify the current user.
+- [x] Cross-user resource access is blocked.
+- [x] One super wallet per user is enforced.
+- [x] Multiple mini wallets work.
+- [x] Income transactions work.
+- [x] Expense transactions work.
+- [x] Transaction update/delete correctly reverses old financial effects.
+- [x] Mini-wallet balances are correct.
+- [x] Super-wallet balance is correct.
+- [x] Transaction dates persist correctly.
+- [x] Transaction history supports filtering/pagination.
+- [x] Payment proof can be stored/retrieved safely.
+- [x] Daily/monthly/yearly analytics work.
+- [x] Mini-wallet comparison works.
+- [x] Category comparison works.
+- [x] Pie/bar chart data APIs work.
+- [x] Daily/monthly spending targets work.
+- [x] Target crossing is detected.
+- [x] Excel import validates and imports data safely.
+- [x] Savings tracking works.
+- [x] Investment tracking works.
+- [x] Debt/credit tracking works.
+- [x] Recurring payments can be stored.
+- [x] Daily summaries are generated.
+- [x] Monthly reminders are generated.
+- [x] Automated tests cover critical financial flows.
+- [x] Database operations are atomic.
+- [x] Pagination and appropriate indexes are implemented.
+- [x] Logging and health checks work.
+- [x] Secrets are not hardcoded.
+- [x] Docker/deployment configuration is ready.
+
+### Explicitly Deferred Items
+
+1. **Distributed Task Queue / Broker (e.g., Celery / Redis):** Multi-node distributed queue deferred; using robust in-process APScheduler with concurrency locks and database deduplication keys.
+2. **Live External Email/SMS Delivery Providers:** Third-party gateway credentials deferred; in-app notifications generated, deduplicated, and retrievable via `/notifications`.
+3. **External S3 Cloud Object Storage:** Cloud S3 credentials deferred; secure local filesystem proof storage at `FILE_STORAGE_PATH` with validation and size limits.
+4. **Persisted Pre-Aggregated Balance Caching & Cursor Pagination:** Persisted caching deferred to guarantee transactions as the single source of financial truth; query performance maintained via indexes and bounded limit/offset pagination.
 
 ---
+

@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
+    Index,
     Integer,
     Numeric,
     String,
@@ -15,6 +16,10 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class Base(DeclarativeBase):
@@ -48,7 +53,7 @@ class User(Base):
         cascade="all, delete-orphan",
     )
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now
     )
 
 
@@ -79,7 +84,7 @@ class SWallet(Base):
         cascade="all, delete-orphan",
     )
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now
     )
 
     @property
@@ -89,8 +94,6 @@ class SWallet(Base):
 
 class MWallet(Base):
     __tablename__ = "mini_wallets"
-    
-    
     __table_args__ = (
         UniqueConstraint("super_wallet_id", "id"),
     )
@@ -99,6 +102,7 @@ class MWallet(Base):
     super_wallet_id: Mapped[int] = mapped_column(
         ForeignKey("wallets.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     modeofpayment: Mapped[str] = mapped_column(String, nullable=False)
@@ -109,7 +113,7 @@ class MWallet(Base):
         cascade="all, delete-orphan",
     )
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now
     )
 
     @property
@@ -132,14 +136,15 @@ class Budget(Base):
     super_wallet_id: Mapped[int] = mapped_column(
         ForeignKey("wallets.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
-    period: Mapped[str] = mapped_column(String, nullable=False)
+    period: Mapped[str] = mapped_column(String, nullable=False, index=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     category: Mapped[str | None] = mapped_column(String, nullable=True)
     super_wallet: Mapped[SWallet] = relationship(back_populates="budgets")
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now
     )
 
 
@@ -156,20 +161,25 @@ class Transaction(Base):
             ["mini_wallets.super_wallet_id", "mini_wallets.id"],
             ondelete="CASCADE",
         ),
+        Index("ix_transactions_super_date", "super_wallet_id", "date_created"),
+        Index("ix_transactions_mini_date", "mini_wallet_id", "date_created"),
+        Index("ix_transactions_super_type_date", "super_wallet_id", "type", "date_created"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mini_wallet_id: Mapped[int] = mapped_column(
         ForeignKey("mini_wallets.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     super_wallet_id: Mapped[int] = mapped_column(
         ForeignKey("wallets.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    type: Mapped[str] = mapped_column(String, nullable=False)
-    category: Mapped[str] = mapped_column(String, nullable=False)
+    type: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String, nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
     modeofpayment: Mapped[str] = mapped_column(String, nullable=False)
     proof: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -182,7 +192,7 @@ class Transaction(Base):
         foreign_keys=[super_wallet_id],
     )
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now, index=True
     )
 
 
@@ -208,7 +218,7 @@ class SavingsGoal(Base):
     status: Mapped[str] = mapped_column(String, nullable=False, default="active")
     user: Mapped[User] = relationship(back_populates="savings_goals")
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now
     )
 
 
@@ -231,7 +241,7 @@ class Investment(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     user: Mapped[User] = relationship(back_populates="investments")
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now
     )
 
 
@@ -275,7 +285,7 @@ class Debt(Base):
         cascade="all, delete-orphan",
     )
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now
     )
 
 
@@ -325,7 +335,7 @@ class RecurringPayment(Base):
     active: Mapped[bool] = mapped_column(nullable=False, default=True)
     user: Mapped[User] = relationship(back_populates="recurring_payments")
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now
     )
 
 
@@ -337,6 +347,8 @@ class Notification(Base):
             "dedupe_key",
             name="uq_notifications_user_dedupe_key",
         ),
+        Index("ix_notifications_user_read", "user_id", "read_at"),
+        Index("ix_notifications_user_date", "user_id", "date_created"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -355,7 +367,5 @@ class Notification(Base):
     payload: Mapped[dict] = mapped_column(JSON, nullable=False)
     read_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     date_created: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow
+        DateTime, nullable=False, default=utc_now
     )
-
-    

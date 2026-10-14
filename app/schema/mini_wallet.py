@@ -4,8 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
 
-def _format_decimal(value: Decimal) -> str:
-    return format(value, "f")
+from app.schema.common import DecimalStr
 
 
 class MWalletCreate(BaseModel):
@@ -22,14 +21,11 @@ class MWalletUpdate(BaseModel):
 
 
 class MWalletResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={Decimal: _format_decimal},
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
     super_wallet_id: int
     name: str
     modeofpayment: str
-    balance: Decimal
+    balance: DecimalStr
     date_created: datetime

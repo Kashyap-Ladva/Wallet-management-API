@@ -5,8 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-def _format_decimal(value: Decimal) -> str:
-    return format(value, "f")
+from app.schema.common import DecimalStr
 
 
 class RecurringPaymentCreate(BaseModel):
@@ -28,15 +27,12 @@ class RecurringPaymentUpdate(BaseModel):
 
 
 class RecurringPaymentResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={Decimal: _format_decimal},
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
     user_id: int
     name: str
-    amount: Decimal
+    amount: DecimalStr
     category: str
     due_day: int
     frequency: str

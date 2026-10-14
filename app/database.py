@@ -17,13 +17,28 @@ if not DATABASE_URL:
     )
 
 
-engine = create_engine(DATABASE_URL)
+def _build_engine(url: str):
+    if url.startswith("sqlite"):
+        return create_engine(
+            url,
+            connect_args={"check_same_thread": False},
+        )
+    return create_engine(
+        url,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+        pool_size=10,
+        max_overflow=20,
+    )
+
+
+engine = _build_engine(DATABASE_URL)
 
 
 SessionLocal = sessionmaker(
     bind=engine,
     autoflush=False,
-    autocommit=False
+    autocommit=False,
 )
 
 def get_db() -> Generator[Session, None, None]:

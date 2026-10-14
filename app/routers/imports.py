@@ -32,7 +32,7 @@ async def _read_and_validate_upload(upload: UploadFile) -> tuple[bytes, str]:
         )
     except ValueError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
     return content, digest
@@ -43,7 +43,7 @@ def _preview_payload(content: bytes, digest: str, mini_wallet: MWallet) -> dict:
         result = import_service.preview_excel(content)
     except ValueError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
     errors = result["errors"]
@@ -105,12 +105,12 @@ async def confirm_excel_import(
     preview = _preview_payload(content, digest, mini_wallet)
     if preview["errors"]:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"message": "Correct all invalid rows before confirming", "rows": preview["errors"]},
         )
     if not preview["rows"]:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="The workbook contains no transaction rows",
         )
     try:
@@ -127,7 +127,7 @@ async def confirm_excel_import(
         ) from exc
     if errors:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"message": "Correct all invalid rows before confirming", "rows": errors},
         )
     return {
@@ -154,12 +154,12 @@ async def import_validated_excel(
     except ValueError as exc:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
     if errors:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"message": "Correct all invalid rows before importing", "rows": errors},
         )
     return {

@@ -95,7 +95,7 @@ def list_transactions_for_mini_wallet(
     type: str | None = Query(default=None),
     category: str | None = Query(default=None),
     modeofpayment: str | None = Query(default=None),
-    limit: int = Query(default=50, ge=1),
+    limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -128,7 +128,7 @@ def list_transactions_for_super_wallet(
     category: str | None = Query(default=None),
     modeofpayment: str | None = Query(default=None),
     mini_wallet_id: int | None = Query(default=None),
-    limit: int = Query(default=50, ge=1),
+    limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -271,7 +271,7 @@ async def upload_transaction_proof(
     transaction = _ensure_owned_transaction(db, current_user, transaction_id)
     if (text is None) == (file is None):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Provide exactly one of text or file",
         )
 
@@ -283,14 +283,14 @@ async def upload_transaction_proof(
             new_reference = proof_service.store_image(file.content_type, content)
         except ValueError as exc:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=str(exc),
             ) from exc
     else:
         new_reference = (text or "").strip()
         if not new_reference:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Text proof cannot be empty",
             )
 

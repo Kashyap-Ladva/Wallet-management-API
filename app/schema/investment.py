@@ -4,8 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-def _format_decimal(value: Decimal) -> str:
-    return format(value, "f")
+from app.schema.common import DecimalStr
 
 
 class InvestmentCreate(BaseModel):
@@ -25,15 +24,12 @@ class InvestmentUpdate(BaseModel):
 
 
 class InvestmentResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={Decimal: _format_decimal},
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
     user_id: int
     name: str
-    amount: Decimal
+    amount: DecimalStr
     investment_type: str
     date: Date
     notes: str | None

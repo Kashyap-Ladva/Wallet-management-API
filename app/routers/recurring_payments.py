@@ -26,7 +26,7 @@ def create_recurring_payment(
 ):
     if payload.frequency != "monthly":
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Only monthly recurring payments are supported",
         )
     return recurring_payment_service.create_payment(
@@ -60,7 +60,7 @@ def update_recurring_payment(
         )
     except ValueError as exc:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
     if payment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recurring payment not found")
     return payment

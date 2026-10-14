@@ -5,12 +5,9 @@ import jwt
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
 
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "ad65cb908bbfba13f43ce554f121353fd73cbdcfb0f733dcaa0c948564d006d3",
-)
-ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "30"))
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("JWT_ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

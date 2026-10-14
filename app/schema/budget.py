@@ -6,11 +6,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schema.common import DecimalStr
+
 BudgetPeriod = Literal["daily", "monthly"]
-
-
-def _format_decimal(value: Decimal) -> str:
-    return format(value, "f")
 
 
 class BudgetCreate(BaseModel):
@@ -28,25 +26,20 @@ class BudgetUpdate(BaseModel):
 
 
 class BudgetResponse(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_encoders={Decimal: _format_decimal},
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
     super_wallet_id: int
     name: str
     period: str
-    amount: Decimal
+    amount: DecimalStr
     category: str | None = None
     date_created: datetime
 
 
 class BudgetStatusResponse(BaseModel):
-    model_config = ConfigDict(json_encoders={Decimal: _format_decimal})
-
-    target: Decimal
-    spent: Decimal
-    remaining: Decimal
-    percentage_used: Decimal
+    target: DecimalStr
+    spent: DecimalStr
+    remaining: DecimalStr
+    percentage_used: DecimalStr
     exceeded: bool
