@@ -8,7 +8,9 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from sqlalchemy.orm import Session
 
-from app.models import MWallet, Transaction
+from app.models import MWallet, SWallet, Transaction
+from app.services import wallet_service
+from app.services.wallet_service import normalize_payment_method
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 REQUIRED_COLUMNS = {
@@ -106,9 +108,12 @@ def _read_rows(content: bytes) -> tuple[list[dict], list[dict]]:
             if not category:
                 row_errors.append("category is required")
 
-            modeofpayment = str(raw.get("modeofpayment") or "").strip()
-            if not modeofpayment:
+            raw_mode = str(raw.get("modeofpayment") or "").strip()
+            if not raw_mode:
                 row_errors.append("modeofpayment is required")
+                modeofpayment = ""
+            else:
+                modeofpayment = " ".join(raw_mode.split()).upper()
 
             try:
                 date_created = _parse_date(raw.get("date_created"))
@@ -154,30 +159,105 @@ def preview_excel(content: bytes) -> dict:
     }
 
 
-def import_excel_rows(
+def preview_excel_for_super_wallet(
     db: Session,
-    mini_wallet: MWallet,
+    super_wallet: SWallet,
+    content: bytes,
+) -> dict:
+    rows, errors = _read_rows(content)
+    available: dict[str, Decimal] = {}
+
+    for row in rows:
+        norm = row["modeofpayment"]
+        existing = (
+            db.query(MWallet)
+            .filter(
+                MWallet.super_wallet_id == super_wallet.id,
+                MWallet.modeofpayment == norm,
+            )
+            .first()
+        )
+        if existing is not None:
+            row["mini_wallet_id"] = existing.id
+            row["mini_wallet_name"] = existing.name
+            if norm not in available:
+                available[norm] = existing.balance
+        else:
+            row["mini_wallet_id"] = None
+            row["mini_wallet_name"] = norm
+            if norm not in available:
+                available[norm] = Decimal("0.00")
+
+        if row["type"] == "expense":
+            if row["amount"] > available[norm]:
+                errors.append(
+                    {
+                        "row": row["row_number"],
+                        "errors": [
+                            "expense exceeds the available mini-wallet balance"
+                        ],
+                    }
+                )
+            else:
+                available[norm] -= row["amount"]
+        else:
+            available[norm] += row["amount"]
+
+    return {
+        "valid": not errors and bool(rows),
+        "rows": rows,
+        "errors": errors,
+        "duplicate_policy": (
+            "Duplicate rows are imported as separate transactions; no automatic "
+            "deduplication is performed."
+        ),
+    }
+
+
+def import_excel_rows_for_super_wallet(
+    db: Session,
+    super_wallet: SWallet,
     rows: list[dict],
 ) -> int:
-    available = mini_wallet.balance
+    resolved_minis: dict[str, MWallet] = {}
+    available_balances: dict[str, Decimal] = {}
+
+    for row in rows:
+        norm = normalize_payment_method(row["modeofpayment"])
+        if norm not in resolved_minis:
+            mini = wallet_service.resolve_or_create_mini_wallet(
+                db,
+                user_id=super_wallet.user_id,
+                super_wallet_id=super_wallet.id,
+                modeofpayment=norm,
+            )
+            resolved_minis[norm] = mini
+            available_balances[norm] = mini.balance
+
     transactions: list[Transaction] = []
     for row in rows:
-        amount = Decimal(row["amount"])
+        norm = normalize_payment_method(row["modeofpayment"])
+        mini = resolved_minis[norm]
+        amount = Decimal(str(row["amount"]))
         if row["type"] == "expense":
-            if amount > available:
+            if amount > available_balances[norm]:
                 raise ValueError(
                     f"Row {row['row_number']}: expense exceeds the available mini-wallet balance"
                 )
-            available -= amount
+            available_balances[norm] -= amount
         else:
-            available += amount
+            available_balances[norm] += amount
+
         transaction_data = {
-            key: value for key, value in row.items() if key != "row_number"
+            key: value
+            for key, value in row.items()
+            if key not in {"row_number", "mini_wallet_id", "mini_wallet_name"}
         }
+        transaction_data["modeofpayment"] = norm
         transactions.append(
             Transaction(
-                mini_wallet_id=mini_wallet.id,
-                super_wallet_id=mini_wallet.super_wallet_id,
+                mini_wallet_id=mini.id,
+                super_wallet_id=super_wallet.id,
                 **transaction_data,
             )
         )
@@ -191,14 +271,30 @@ def import_excel_rows(
     return len(transactions)
 
 
+def import_excel_rows(
+    db: Session,
+    mini_wallet: MWallet,
+    rows: list[dict],
+) -> int:
+    return import_excel_rows_for_super_wallet(db, mini_wallet.super_wallet, rows)
+
+
+def import_preview_rows_for_super_wallet(
+    db: Session,
+    super_wallet: SWallet,
+    content: bytes,
+) -> tuple[int, list[dict]]:
+    preview = preview_excel_for_super_wallet(db, super_wallet, content)
+    if preview["errors"]:
+        return 0, preview["errors"]
+    if not preview["rows"]:
+        raise ValueError("The workbook contains no transaction rows")
+    return import_excel_rows_for_super_wallet(db, super_wallet, preview["rows"]), []
+
+
 def import_preview_rows(
     db: Session,
     mini_wallet: MWallet,
     content: bytes,
 ) -> tuple[int, list[dict]]:
-    rows, errors = _read_rows(content)
-    if errors:
-        return 0, errors
-    if not rows:
-        raise ValueError("The workbook contains no transaction rows")
-    return import_excel_rows(db, mini_wallet, rows), []
+    return import_preview_rows_for_super_wallet(db, mini_wallet.super_wallet, content)

@@ -68,7 +68,6 @@ class SWallet(Base):
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     currency: Mapped[str] = mapped_column(String, nullable=False)
-    modeofpayment: Mapped[str] = mapped_column(String, nullable=False, default="wallet")
     user: Mapped[User] = relationship(back_populates="wallet")
     mini_wallets: Mapped[list["MWallet"]] = relationship(
         back_populates="super_wallet",
@@ -95,7 +94,12 @@ class SWallet(Base):
 class MWallet(Base):
     __tablename__ = "mini_wallets"
     __table_args__ = (
-        UniqueConstraint("super_wallet_id", "id"),
+        UniqueConstraint("super_wallet_id", "id", name="uq_mini_wallets_super_wallet_id_id"),
+        UniqueConstraint(
+            "super_wallet_id",
+            "modeofpayment",
+            name="uq_mini_wallets_super_wallet_modeofpayment",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -105,7 +109,7 @@ class MWallet(Base):
         index=True,
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
-    modeofpayment: Mapped[str] = mapped_column(String, nullable=False)
+    modeofpayment: Mapped[str] = mapped_column(String, nullable=False, index=True)
     super_wallet: Mapped[SWallet] = relationship(back_populates="mini_wallets")
     transactions: Mapped[list["Transaction"]] = relationship(
         back_populates="mini_wallet",

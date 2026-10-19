@@ -97,7 +97,7 @@ def test_excel_import_preview_confirm_and_reject_invalid_batch():
     mini_wallet_id = create_wallet(token)
     content = workbook_bytes(
         [
-            [5000, "income", "salary", date(2026, 10, 1), "bank", "Salary", None],
+            [5000, "income", "salary", date(2026, 10, 1), "cash", "Salary", None],
             [1200, "expense", "food", date(2026, 10, 2), "cash", "Groceries", "receipt"],
         ]
     )

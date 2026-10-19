@@ -51,3 +51,6 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    from app.migrations.migrate import run_migrations
+
+    run_migrations(engine)

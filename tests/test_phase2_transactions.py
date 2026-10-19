@@ -66,7 +66,7 @@ def test_transaction_balance_and_ownership_work_for_mini_wallets():
             "type": "income",
             "category": "salary",
             "description": "Monthly salary",
-            "modeofpayment": "bank",
+            "modeofpayment": "cash",
             "proof": "paystub",
             "date_created": "2026-01-15T09:30:00",
         },

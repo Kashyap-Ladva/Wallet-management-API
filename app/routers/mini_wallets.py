@@ -68,12 +68,15 @@ def update_mini_wallet(
             detail="Forbidden: you do not own this mini wallet",
         )
 
-    updated = wallet_service.update_mini_wallet(
-        db,
-        current_user.id,
-        mini_wallet_id,
-        payload.model_dump(exclude_unset=True),
-    )
+    try:
+        updated = wallet_service.update_mini_wallet(
+            db,
+            current_user.id,
+            mini_wallet_id,
+            payload.model_dump(exclude_unset=True),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if updated is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mini wallet not found")
     return updated

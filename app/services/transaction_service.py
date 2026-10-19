@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import MWallet, Transaction
+from app.services.wallet_service import normalize_payment_method
 
 
 def transaction_effect(transaction_type: str, amount: Decimal) -> Decimal:
@@ -20,6 +21,8 @@ def create_transaction(
     if mini_wallet is None:
         raise ValueError("Mini wallet not found")
 
+    modeofpayment = normalize_payment_method(payload.get("modeofpayment"))
+
     transaction = Transaction(
         mini_wallet_id=mini_wallet_id,
         super_wallet_id=mini_wallet.super_wallet_id,
@@ -27,7 +30,7 @@ def create_transaction(
         type=payload["type"],
         category=(payload.get("category") or "").strip(),
         description=payload.get("description"),
-        modeofpayment=(payload.get("modeofpayment") or "").strip(),
+        modeofpayment=modeofpayment,
         proof=payload.get("proof"),
         date_created=payload.get("date_created") or datetime.now(timezone.utc),
     )
@@ -67,6 +70,8 @@ def update_transaction(db: Session, transaction_id: int, updates: dict) -> Trans
     for field, value in updates.items():
         if value is None:
             continue
+        if field == "modeofpayment":
+            value = normalize_payment_method(value)
         setattr(transaction, field, value)
     db.flush()
     db.refresh(transaction)

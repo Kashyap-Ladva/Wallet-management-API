@@ -8,11 +8,15 @@ from app.schema.common import DecimalStr
 
 
 class SWalletCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str
     currency: str
 
 
 class SWalletUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str | None = None
     currency: str | None = None
 
@@ -24,6 +28,5 @@ class SWalletResponse(BaseModel):
     user_id: int
     name: str
     currency: str
-    modeofpayment: str
     total_balance: DecimalStr
     date_created: datetime

@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
@@ -12,7 +13,7 @@ from app.schema.transaction import (
     TransactionResponse,
     TransactionUpdate,
 )
-from app.services import proof_service, transaction_service
+from app.services import proof_service, transaction_service, wallet_service
 
 router = APIRouter(tags=["transactions"])
 
@@ -54,6 +55,52 @@ def _effect_for(transaction_type: str, amount: Decimal) -> Decimal:
 
 
 @router.post(
+    "/super-wallet/transactions",
+    response_model=TransactionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_super_wallet_transaction(
+    payload: TransactionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    super_wallet = current_user.wallet
+    if super_wallet is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Super wallet not found")
+
+    try:
+        resolved_mini_wallet = wallet_service.resolve_or_create_mini_wallet(
+            db,
+            user_id=current_user.id,
+            super_wallet_id=super_wallet.id,
+            modeofpayment=payload.modeofpayment,
+        )
+
+        if payload.type == "expense" and resolved_mini_wallet.balance < payload.amount:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient balance")
+
+        transaction = transaction_service.create_transaction(
+            db,
+            resolved_mini_wallet.id,
+            payload.model_dump(exclude_none=True),
+        )
+        db.commit()
+        return transaction
+    except HTTPException:
+        db.rollback()
+        raise
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.post(
     "/mini-wallets/{mini_wallet_id}/transactions",
     response_model=TransactionResponse,
     status_code=status.HTTP_201_CREATED,
@@ -65,18 +112,29 @@ def create_transaction(
     current_user: User = Depends(get_current_user),
 ):
     mini_wallet = _ensure_owned_mini_wallet(db, current_user, mini_wallet_id)
-    if payload.type == "expense" and mini_wallet.balance < payload.amount:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient balance")
 
     try:
+        resolved_mini_wallet = wallet_service.resolve_or_create_mini_wallet(
+            db,
+            user_id=current_user.id,
+            super_wallet_id=mini_wallet.super_wallet_id,
+            modeofpayment=payload.modeofpayment,
+        )
+
+        if payload.type == "expense" and resolved_mini_wallet.balance < payload.amount:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient balance")
+
         transaction = transaction_service.create_transaction(
             db,
-            mini_wallet_id,
+            resolved_mini_wallet.id,
             payload.model_dump(exclude_none=True),
         )
 
         db.commit()
         return transaction
+    except HTTPException:
+        db.rollback()
+        raise
     except ValueError as exc:
         db.rollback()
         raise HTTPException(
@@ -86,6 +144,7 @@ def create_transaction(
     except Exception:
         db.rollback()
         raise
+
 
 @router.get("/mini-wallets/{mini_wallet_id}/transactions", response_model=list[TransactionResponse])
 def list_transactions_for_mini_wallet(
@@ -115,7 +174,7 @@ def list_transactions_for_mini_wallet(
     if category:
         query = query.filter(Transaction.category == category)
     if modeofpayment:
-        query = query.filter(Transaction.modeofpayment == modeofpayment)
+        query = query.filter(func.upper(Transaction.modeofpayment) == modeofpayment.strip().upper())
 
     return query.offset(offset).limit(limit).all()
 
@@ -147,7 +206,7 @@ def list_transactions_for_super_wallet(
     if category:
         query = query.filter(Transaction.category == category)
     if modeofpayment:
-        query = query.filter(Transaction.modeofpayment == modeofpayment)
+        query = query.filter(func.upper(Transaction.modeofpayment) == modeofpayment.strip().upper())
     if mini_wallet_id:
         query = query.filter(Transaction.mini_wallet_id == mini_wallet_id)
 
@@ -176,16 +235,41 @@ def update_transaction(
     if not updates:
         return existing
 
-    current_balance = existing.mini_wallet.balance
-    old_effect = _effect_for(existing.type, existing.amount)
-    projected_balance = current_balance - old_effect
+    new_type = updates.get("type", existing.type)
+    new_amount = updates.get("amount", existing.amount)
+    new_mode = updates.get("modeofpayment", existing.modeofpayment)
 
-    if "type" in updates or "amount" in updates:
-        new_type = updates.get("type", existing.type)
-        new_amount = updates.get("amount", existing.amount)
-        projected_balance += _effect_for(new_type, new_amount)
+    old_effect = _effect_for(existing.type, existing.amount)
+    new_effect = _effect_for(new_type, new_amount)
+
+    target_mini_wallet = existing.mini_wallet
+    if "modeofpayment" in updates:
+        target_mini_wallet = wallet_service.resolve_or_create_mini_wallet(
+            db,
+            user_id=current_user.id,
+            super_wallet_id=existing.super_wallet_id,
+            modeofpayment=new_mode,
+        )
+        updates["mini_wallet_id"] = target_mini_wallet.id
+        updates["modeofpayment"] = target_mini_wallet.modeofpayment
+
+    if target_mini_wallet.id == existing.mini_wallet_id:
+        projected_balance = existing.mini_wallet.balance - old_effect + new_effect
         if new_type == "expense" and projected_balance < 0:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient balance")
+    else:
+        source_projected = existing.mini_wallet.balance - old_effect
+        if source_projected < 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Insufficient balance in source mini-wallet",
+            )
+        target_projected = target_mini_wallet.balance + new_effect
+        if new_type == "expense" and target_projected < 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Insufficient balance in target mini-wallet",
+            )
 
     try:
         updated = transaction_service.update_transaction(
@@ -202,7 +286,6 @@ def update_transaction(
             )
 
         db.commit()
-
         return updated
 
     except HTTPException:

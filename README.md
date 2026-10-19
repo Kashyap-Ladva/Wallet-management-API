@@ -5,12 +5,15 @@ A FastAPI backend for managing user wallets, income and expense transactions, bu
 ## Features
 
 - JWT bearer authentication and user-scoped API access
-- One super wallet per user, with multiple mini wallets
+- One super wallet per user, containing general wallet details (name, currency, owner) without a mode of payment
+- Automatic mini-wallet resolution per mode of payment (CASH, CARD, UPI, BANK TRANSFER, etc.) under each super-wallet
+- Unique constraint enforcing exactly one mini-wallet per normalized mode of payment per super-wallet
+- Direct transaction recording via `/transactions` or `/super-wallet/transactions` with automatic mini-wallet resolution and reuse
 - Income and expense transactions with balances derived from transaction history
 - Transaction filtering, pagination, and text/image proof references
 - Daily, monthly, and yearly analytics, category breakdowns, and chart data
 - Daily and monthly budgets with status checks
-- Excel transaction preview, validation, and import
+- Excel transaction preview, per-row mini-wallet resolution, validation, and atomic import
 - Savings goals, contributions, withdrawals, and progress
 - Separate investment records
 - Lent/borrowed debt tracking and repayment history
@@ -168,11 +171,13 @@ All endpoints require bearer authentication except registration, login, the root
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/mini-wallets/{mini_wallet_id}/transactions` | Create an income or expense (atomic balance validation) |
+| `POST` | `/transactions` | Create an income or expense under user's super-wallet with automatic mini-wallet resolution |
+| `POST` | `/super-wallet/transactions` | Create an income or expense under user's super-wallet with automatic mini-wallet resolution |
+| `POST` | `/mini-wallets/{mini_wallet_id}/transactions` | Create an income or expense (resolves to mode-of-payment mini-wallet) |
 | `GET` | `/mini-wallets/{mini_wallet_id}/transactions` | List mini-wallet transactions (paginated, max limit 100) |
 | `GET` | `/super-wallet/transactions` | List super-wallet transactions (paginated, max limit 100) |
 | `GET` | `/transactions/{transaction_id}` | Get a transaction |
-| `PUT` | `/transactions/{transaction_id}` | Update a transaction (reverses previous financial effect) |
+| `PUT` | `/transactions/{transaction_id}` | Update a transaction (reverses previous financial effect and remaps mini-wallet if mode changes) |
 | `DELETE` | `/transactions/{transaction_id}` | Delete a transaction (restores financial balance) |
 | `POST` | `/transactions/{transaction_id}/proof` | Attach text or image proof (validated magic bytes, 5 MB limit) |
 | `GET` | `/transactions/{transaction_id}/proof` | Retrieve transaction proof image or text |
@@ -198,8 +203,8 @@ All endpoints require bearer authentication except registration, login, the root
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/imports/excel/preview` | Validate and preview rows without inserting transactions |
-| `POST` | `/imports/excel/confirm` | Confirm import using `preview_sha256` from preview |
+| `POST` | `/imports/excel/preview` | Validate and preview rows with per-row mini-wallet resolution and balance check |
+| `POST` | `/imports/excel/confirm` | Confirm import using `preview_sha256`; resolves mini-wallets atomically |
 | `POST` | `/imports/excel` | Validate and import workbook in one atomic batch |
 
 ### Savings, investments, debt, and recurring payments
@@ -232,7 +237,8 @@ Run the complete test suite:
 pytest
 ```
 
-The test suite covers 14 comprehensive test modules across all layers:
+The test suite covers comprehensive test modules across all layers:
+- `tests/test_mode_of_payment_refactor.py`: 14 dedicated test cases for automatic mini-wallet resolution, normalization, uniqueness constraints, concurrent requests, cross-user isolation, Excel row-level resolution and atomic rollback, financial integrity, and migration compatibility.
 - `tests/test_phase1_auth.py`: Authentication, JWT tokens, user profiles, wallet hierarchy isolation.
 - `tests/test_phase2_transactions.py`: Financial engine, income/expense calculations, transaction update/delete.
 - `tests/test_phase3_analytics.py`: Daily/monthly/yearly aggregations, chart data formats, budget targets.
