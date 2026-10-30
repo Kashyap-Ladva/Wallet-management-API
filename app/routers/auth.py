@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
+from app.core.rate_limit import rate_limit_login, rate_limit_register
 from app.core.security import create_access_token, verify_password
 from app.database import get_db
 from app.schema.user import UserCreate, UserResponse
@@ -20,7 +21,12 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit_register)],
+)
 def register_user(payload: UserCreate, db: Session = Depends(get_db)):
     if user_service.get_user_by_email(db, str(payload.email)):
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -31,7 +37,11 @@ def register_user(payload: UserCreate, db: Session = Depends(get_db)):
     return user
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    dependencies=[Depends(rate_limit_login)],
+)
 def login_user(payload: LoginRequest, db: Session = Depends(get_db)):
     user = user_service.get_user_by_email(db, str(payload.email))
     if user is None or not verify_password(payload.password, user.password_hash):

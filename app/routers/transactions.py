@@ -6,6 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
+from app.core.rate_limit import rate_limit_read, rate_limit_write
 from app.database import get_db
 from app.models import MWallet, Transaction, User
 from app.schema.transaction import (
@@ -13,7 +14,7 @@ from app.schema.transaction import (
     TransactionResponse,
     TransactionUpdate,
 )
-from app.services import proof_service, transaction_service, wallet_service
+from app.services import cache_service, proof_service, transaction_service, wallet_service
 
 router = APIRouter(tags=["transactions"])
 
@@ -58,8 +59,15 @@ def _effect_for(transaction_type: str, amount: Decimal) -> Decimal:
     "/super-wallet/transactions",
     response_model=TransactionResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit_write)],
 )
-def create_super_wallet_transaction(
+@router.post(
+    "/transactions",
+    response_model=TransactionResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit_write)],
+)
+async def create_super_wallet_transaction(
     payload: TransactionCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -85,6 +93,10 @@ def create_super_wallet_transaction(
             payload.model_dump(exclude_none=True),
         )
         db.commit()
+        try:
+            await cache_service.invalidate_user_analytics(current_user.id)
+        except Exception:
+            pass
         return transaction
     except HTTPException:
         db.rollback()
@@ -104,8 +116,9 @@ def create_super_wallet_transaction(
     "/mini-wallets/{mini_wallet_id}/transactions",
     response_model=TransactionResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit_write)],
 )
-def create_transaction(
+async def create_transaction(
     mini_wallet_id: int,
     payload: TransactionCreate,
     db: Session = Depends(get_db),
@@ -131,6 +144,10 @@ def create_transaction(
         )
 
         db.commit()
+        try:
+            await cache_service.invalidate_user_analytics(current_user.id)
+        except Exception:
+            pass
         return transaction
     except HTTPException:
         db.rollback()
@@ -146,7 +163,11 @@ def create_transaction(
         raise
 
 
-@router.get("/mini-wallets/{mini_wallet_id}/transactions", response_model=list[TransactionResponse])
+@router.get(
+    "/mini-wallets/{mini_wallet_id}/transactions",
+    response_model=list[TransactionResponse],
+    dependencies=[Depends(rate_limit_read)],
+)
 def list_transactions_for_mini_wallet(
     mini_wallet_id: int,
     date_from: str | None = Query(default=None),
@@ -179,7 +200,11 @@ def list_transactions_for_mini_wallet(
     return query.offset(offset).limit(limit).all()
 
 
-@router.get("/super-wallet/transactions", response_model=list[TransactionResponse])
+@router.get(
+    "/super-wallet/transactions",
+    response_model=list[TransactionResponse],
+    dependencies=[Depends(rate_limit_read)],
+)
 def list_transactions_for_super_wallet(
     date_from: str | None = Query(default=None),
     date_to: str | None = Query(default=None),
@@ -213,7 +238,11 @@ def list_transactions_for_super_wallet(
     return query.order_by(Transaction.date_created.desc(), Transaction.id.desc()).offset(offset).limit(limit).all()
 
 
-@router.get("/transactions/{transaction_id}", response_model=TransactionResponse)
+@router.get(
+    "/transactions/{transaction_id}",
+    response_model=TransactionResponse,
+    dependencies=[Depends(rate_limit_read)],
+)
 def get_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
@@ -223,8 +252,12 @@ def get_transaction(
     return transaction
 
 
-@router.put("/transactions/{transaction_id}", response_model=TransactionResponse)
-def update_transaction(
+@router.put(
+    "/transactions/{transaction_id}",
+    response_model=TransactionResponse,
+    dependencies=[Depends(rate_limit_write)],
+)
+async def update_transaction(
     transaction_id: int,
     payload: TransactionUpdate,
     db: Session = Depends(get_db),
@@ -286,6 +319,10 @@ def update_transaction(
             )
 
         db.commit()
+        try:
+            await cache_service.invalidate_user_analytics(current_user.id)
+        except Exception:
+            pass
         return updated
 
     except HTTPException:
@@ -302,11 +339,14 @@ def update_transaction(
     except Exception:
         db.rollback()
         raise
-    
 
 
-@router.delete("/transactions/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_transaction(
+@router.delete(
+    "/transactions/{transaction_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(rate_limit_write)],
+)
+async def delete_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -332,6 +372,10 @@ def delete_transaction(
             )
 
         db.commit()
+        try:
+            await cache_service.invalidate_user_analytics(current_user.id)
+        except Exception:
+            pass
         proof_service.delete_image(proof_reference)
 
     except HTTPException:

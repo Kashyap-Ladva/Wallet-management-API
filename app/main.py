@@ -12,6 +12,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.core.redis import check_redis_health, close_redis, init_redis
 from app.database import get_db, init_db
 from app.routers.analytics import router as analytics_router
 from app.routers.auth import router as auth_router
@@ -73,12 +74,16 @@ async def lifespan(app: FastAPI):
         app.state.scheduler_running = False
         logger.info("Background job scheduler disabled by configuration")
 
+    # Initialize asynchronous Redis connection pool
+    await init_redis(app)
+
     try:
         yield
     finally:
         if app.state.scheduler is not None:
             app.state.scheduler.shutdown(wait=False)
             logger.info("Background job scheduler stopped")
+        await close_redis(app)
 
 
 app = FastAPI(title="Wallet Management API", lifespan=lifespan)
@@ -149,7 +154,8 @@ app.include_router(notifications_router)
 
 
 @app.get("/health", tags=["system"])
-def health(db: Session = Depends(get_db)):
+async def health(db: Session = Depends(get_db)):
+    redis_status = await check_redis_health()
     try:
         db.execute(text("SELECT 1"))
         db_status = "connected"
@@ -160,13 +166,38 @@ def health(db: Session = Depends(get_db)):
             content={
                 "status": "degraded",
                 "database": "unavailable",
+                "redis": redis_status,
                 "detail": str(exc),
             },
         )
     return {
         "status": "healthy",
         "database": db_status,
+        "redis": redis_status,
         "scheduler": "running"
         if getattr(app.state, "scheduler_running", False)
         else "disabled",
+    }
+
+
+@app.get("/ready", tags=["system"])
+async def readiness(db: Session = Depends(get_db)):
+    redis_status = await check_redis_health()
+    try:
+        db.execute(text("SELECT 1"))
+        db_status = "connected"
+    except Exception as exc:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "status": "not_ready",
+                "database": "unavailable",
+                "redis": redis_status,
+                "detail": str(exc),
+            },
+        )
+    return {
+        "status": "ready",
+        "database": db_status,
+        "redis": redis_status,
     }

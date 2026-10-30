@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
+from app.core.rate_limit import rate_limit_write
 from app.database import get_db
 from app.models import MWallet, SWallet, User
-from app.services import import_service, wallet_service
+from app.services import cache_service, import_service, wallet_service
 
 router = APIRouter(prefix="/imports", tags=["imports"])
 
@@ -74,7 +75,10 @@ async def preview_excel_import(
     return preview
 
 
-@router.post("/excel/confirm")
+@router.post(
+    "/excel/confirm",
+    dependencies=[Depends(rate_limit_write)],
+)
 async def confirm_excel_import(
     super_wallet_id: int | None = Form(default=None),
     mini_wallet_id: int | None = Form(default=None),
@@ -127,13 +131,19 @@ async def confirm_excel_import(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"message": "Correct all invalid rows before confirming", "rows": errors},
         )
+    if imported_count > 0:
+        await cache_service.invalidate_user_analytics(current_user.id)
     return {
         "imported_count": imported_count,
         "duplicate_policy": "allow",
     }
 
 
-@router.post("/excel", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/excel",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit_write)],
+)
 async def import_validated_excel(
     super_wallet_id: int | None = Form(default=None),
     mini_wallet_id: int | None = Form(default=None),
@@ -160,6 +170,8 @@ async def import_validated_excel(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"message": "Correct all invalid rows before importing", "rows": errors},
         )
+    if imported_count > 0:
+        await cache_service.invalidate_user_analytics(current_user.id)
     return {
         "imported_count": imported_count,
         "duplicate_policy": "allow",

@@ -1,20 +1,54 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: wallet_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - redis_data:/data
+    networks:
+      - wallet_net
+
   api:
     build: .
     container_name: wallet_api
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       SECRET_KEY: ${SECRET_KEY}
       JWT_ALGORITHM: ${JWT_ALGORITHM}
       JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
       SCHEDULER_ENABLED: ${SCHEDULER_ENABLED}
       LOG_LEVEL: ${LOG_LEVEL}
       FILE_STORAGE_PATH: ${FILE_STORAGE_PATH}
+      ANALYTICS_DAILY_CACHE_TTL: ${ANALYTICS_DAILY_CACHE_TTL:-60}
+      ANALYTICS_MONTHLY_CACHE_TTL: ${ANALYTICS_MONTHLY_CACHE_TTL:-300}
+      RATE_LIMIT_LOGIN: ${RATE_LIMIT_LOGIN:-5/minute}
+      RATE_LIMIT_REGISTER: ${RATE_LIMIT_REGISTER:-3/hour}
+      RATE_LIMIT_READ: ${RATE_LIMIT_READ:-120/minute}
+      RATE_LIMIT_WRITE: ${RATE_LIMIT_WRITE:-30/minute}
+      RATE_LIMIT_FAIL_OPEN: ${RATE_LIMIT_FAIL_OPEN:-true}
     volumes:
       - proof_data:/app/data
+    networks:
+      - wallet_net
 
 volumes:
   proof_data:
+  redis_data:
+
+networks:
+  wallet_net:
+    driver: bridge
