@@ -1,10 +1,16 @@
+import os
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
 from app.core.rate_limit import rate_limit_write
 from app.database import get_db
-from app.models import MWallet, SWallet, User
+from app.jobs.excel_import import process_excel_import_task
+from app.models import ImportJob, MWallet, SWallet, User
+from app.routers.tasks import record_task_ownership
+from app.schema.celery_tasks import AsyncImportCreatedResponse, ImportJobStatusResponse
 from app.services import cache_service, import_service, wallet_service
 
 router = APIRouter(prefix="/imports", tags=["imports"])
@@ -176,3 +182,116 @@ async def import_validated_excel(
         "imported_count": imported_count,
         "duplicate_policy": "allow",
     }
+
+
+@router.post(
+    "/async",
+    response_model=AsyncImportCreatedResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(rate_limit_write)],
+)
+@router.post(
+    "/excel/async",
+    response_model=AsyncImportCreatedResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(rate_limit_write)],
+)
+async def import_excel_async(
+    super_wallet_id: int | None = Form(default=None),
+    mini_wallet_id: int | None = Form(default=None),
+    preview_sha256: str | None = Form(default=None),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    super_wallet = _resolve_super_wallet(db, current_user, super_wallet_id, mini_wallet_id)
+    content, digest = await _read_and_validate_upload(file)
+
+    if preview_sha256 and digest != preview_sha256.lower():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The uploaded file differs from the file that was previewed",
+        )
+
+    # Stage file securely on shared volume
+    storage_root = os.getenv("FILE_STORAGE_PATH", "app/data/proofs")
+    base_dir = os.path.dirname(storage_root) if "proofs" in storage_root else storage_root
+    imports_dir = os.path.join(base_dir, "imports")
+    os.makedirs(imports_dir, exist_ok=True)
+
+    job_id = uuid4().hex
+    staged_filename = f"{job_id}.xlsx"
+    staged_path = os.path.join(imports_dir, staged_filename)
+
+    with open(staged_path, "wb") as f:
+        f.write(content)
+
+    # Create ImportJob record
+    job = ImportJob(
+        id=job_id,
+        user_id=current_user.id,
+        status="PENDING",
+        filename=file.filename,
+        file_sha256=digest,
+    )
+    db.add(job)
+    db.commit()
+
+    # Dispatch Celery background task
+    task = process_excel_import_task.delay(
+        import_job_id=job_id,
+        super_wallet_id=super_wallet.id,
+        user_id=current_user.id,
+        file_path=staged_path,
+        preview_sha256=digest,
+    )
+
+    job.task_id = task.id
+    db.commit()
+
+    # Record task ownership in Redis
+    record_task_ownership(task.id, current_user.id)
+
+    return AsyncImportCreatedResponse(
+        import_id=job_id,
+        task_id=task.id,
+        status="PENDING",
+        message="Excel import queued for background processing",
+        file_sha256=digest,
+    )
+
+
+@router.get(
+    "/{import_id}/status",
+    response_model=ImportJobStatusResponse,
+)
+def get_import_status(
+    import_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    job = db.get(ImportJob, import_id)
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Import job not found",
+        )
+
+    if job.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden",
+        )
+
+    return ImportJobStatusResponse(
+        import_id=job.id,
+        task_id=job.task_id,
+        status=job.status,
+        total_rows=job.total_rows,
+        imported_count=job.imported_count,
+        file_sha256=job.file_sha256,
+        error_details=job.error_details,
+        date_created=job.date_created,
+        date_completed=job.date_completed,
+    )
+

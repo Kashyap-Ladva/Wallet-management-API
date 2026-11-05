@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app/data/proofs && \
+    mkdir -p /app/data/proofs /app/data/imports && \
     chown -R appuser:appuser /app
 USER appuser
 

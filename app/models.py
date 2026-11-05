@@ -373,3 +373,31 @@ class Notification(Base):
     date_created: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=utc_now
     )
+
+
+class ImportJob(Base):
+    __tablename__ = "import_jobs"
+    __table_args__ = (
+        Index("ix_import_jobs_user_status", "user_id", "status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    task_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="PENDING"
+    )  # PENDING, PROCESSING, COMPLETED, FAILED
+    filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    file_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    total_rows: Mapped[int] = mapped_column(Integer, default=0)
+    imported_count: Mapped[int] = mapped_column(Integer, default=0)
+    error_details: Mapped[dict | list | None] = mapped_column(JSON, nullable=True)
+    date_created: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=utc_now
+    )
+    date_completed: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    user: Mapped[User] = relationship()

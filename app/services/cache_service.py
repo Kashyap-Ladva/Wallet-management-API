@@ -115,3 +115,34 @@ async def invalidate_user_analytics(user_id: int) -> int:
             exc,
         )
         return 0
+
+
+def invalidate_user_analytics_sync(user_id: int) -> int:
+    """
+    Synchronous cache invalidation helper for Celery workers.
+    Safely purges Redis analytics cache keys for the specified user.
+    """
+    import redis
+
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    try:
+        client = redis.Redis.from_url(redis_url, decode_responses=True, socket_timeout=0.2)
+        match_pattern = f"analytics:*:u{user_id}:*"
+        exact_pattern = f"analytics:*:u{user_id}"
+        keys = list(client.scan_iter(match=match_pattern))
+        for key in client.scan_iter(match=exact_pattern):
+            if key not in keys:
+                keys.append(key)
+        if keys:
+            deleted = client.delete(*keys)
+            logger.info("Sync invalidated %d cache keys for user %d", deleted, user_id)
+            return deleted
+        return 0
+    except Exception as exc:
+        logger.warning(
+            "Sync cache invalidation failed for user %d: %s. Relying on TTL expiration.",
+            user_id,
+            exc,
+        )
+        return 0
+

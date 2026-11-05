@@ -1,5 +1,6 @@
 import os
 from collections.abc import Generator
+from contextlib import contextmanager
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -45,6 +46,23 @@ def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
         yield db
+    finally:
+        db.close()
+
+
+@contextmanager
+def get_task_db() -> Generator[Session, None, None]:
+    """
+    Dedicated database session generator for background Celery tasks.
+    Creates a fresh, isolated session, rolls back on exceptions, and guarantees closure
+    to prevent connection leaks in worker processes.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 

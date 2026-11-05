@@ -4,8 +4,6 @@ import os
 import time
 from uuid import uuid4
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 from fastapi import Depends, FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -25,64 +23,49 @@ from app.routers.notifications import router as notifications_router
 from app.routers.recurring_payments import router as recurring_payments_router
 from app.routers.savings import router as savings_router
 from app.routers.super_wallet import router as super_wallet_router
+from app.routers.tasks import router as tasks_router
 from app.routers.transactions import router as transaction_router
 from app.routers.users import router as users_router
 
 # Configure structured logging
-log_level = os.getenv("LOG_LEVEL").upper()
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=log_level,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    format="%(asctime)s [%(levelname)s] %(name)s:%(message)s",
 )
 logger = logging.getLogger("app.api")
 
 
+class CeleryBeatSchedulerState:
+    """Compatibility proxy indicating Celery Beat is responsible for scheduled tasks."""
+    running = True
+
+    def shutdown(self, wait: bool = False) -> None:
+        pass
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    scheduler_enabled = os.getenv("SCHEDULER_ENABLED").lower() in (
+    scheduler_enabled = os.getenv("SCHEDULER_ENABLED", "true").lower() in (
         "true",
         "1",
         "yes",
     )
     if scheduler_enabled:
-        scheduler = AsyncIOScheduler(timezone="UTC")
-        from app.jobs.daily_summary import run_daily_summary_job
-        from app.jobs.monthly_reminders import run_monthly_reminders_job
-
-        scheduler.add_job(
-            run_daily_summary_job,
-            CronTrigger(hour=23, minute=59, timezone="UTC"),
-            id="daily-summary",
-            replace_existing=True,
-            coalesce=True,
-            max_instances=1,
-        )
-        scheduler.add_job(
-            run_monthly_reminders_job,
-            CronTrigger(day=1, hour=0, minute=5, timezone="UTC"),
-            id="monthly-reminders",
-            replace_existing=True,
-            coalesce=True,
-            max_instances=1,
-        )
-        scheduler.start()
-        app.state.scheduler = scheduler
+        app.state.scheduler = CeleryBeatSchedulerState()
         app.state.scheduler_running = True
-        logger.info("Background job scheduler started")
+        logger.info("Background job scheduling handled by Celery Beat")
     else:
         app.state.scheduler = None
         app.state.scheduler_running = False
         logger.info("Background job scheduler disabled by configuration")
 
-    # Initialize asynchronous Redis connection pool
+    # Initialize Redis connection pool
     await init_redis(app)
 
     try:
         yield
     finally:
-        if app.state.scheduler is not None:
-            app.state.scheduler.shutdown(wait=False)
-            logger.info("Background job scheduler stopped")
         await close_redis(app)
 
 
@@ -151,6 +134,7 @@ app.include_router(investments_router)
 app.include_router(debts_router)
 app.include_router(recurring_payments_router)
 app.include_router(notifications_router)
+app.include_router(tasks_router)
 
 
 @app.get("/health", tags=["system"])
